@@ -39,8 +39,9 @@ jobs:
         run: |
           curl --fail --location --retry 3 -o "$RUNNER_TEMP/Zotero.dmg" https://download.zotero.org/client/release/10.0.6/Zotero-10.0.6.dmg
           hdiutil attach "$RUNNER_TEMP/Zotero.dmg" -mountpoint "$RUNNER_TEMP/quicklex-zotero" -nobrowse -readonly
-          python scripts/native_smoke.py --executable "$RUNNER_TEMP/quicklex-zotero/Zotero.app/Contents/MacOS/zotero"
+          ditto "$RUNNER_TEMP/quicklex-zotero/Zotero.app" "$RUNNER_TEMP/quicklex-app/Zotero.app"
           hdiutil detach "$RUNNER_TEMP/quicklex-zotero"
+          python scripts/native_smoke.py --executable "$RUNNER_TEMP/quicklex-app/Zotero.app/Contents/MacOS/zotero"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

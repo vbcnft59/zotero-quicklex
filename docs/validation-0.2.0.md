@@ -18,6 +18,8 @@
 
 Windows 已通过：`version=10.0.6`、`active=true`、`compatible=true`、`appDisabled=false`，四个查询返回预期中文释义。
 
+macOS 15 的 Apple Silicon（`aarch64-gcc3`）和 Intel（`x86_64-gcc3`）也已在官方 Zotero 10.0.6 通过上述四个查询及菜单检查，报告为 `passed=true`。首次 [原生检查记录](https://github.com/vbcnft59/zotero-quicklex/actions/runs/38560971994) 的两项任务在后续卸载测试 DMG 时因资源忙而失败；客户端功能检查均已通过。工作流已改为先复制应用、卸载镜像，再启动客户端。
+
 [CI](../.github/workflows/ci.yml) 在 Windows、macOS ARM64、macOS Intel 和 Linux 构建并运行代码测试。两个 macOS 任务还下载官方 Zotero 10.0.6 DMG，在含空格、中文的独立配置路径运行同一原生检查。**macOS 实际通过情况以 [Actions 对应提交](https://github.com/vbcnft59/zotero-quicklex/actions) 和附件 `report.json` 为准。** 构建与原生加载是不同检查。
 
 程序触发回调没有模拟实际 PDF 上的物理双击，也未穷尽文档类型、独立阅读器和其他插件共存的情况。OCR、整句翻译不属于插件功能。
