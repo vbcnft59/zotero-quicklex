@@ -103,7 +103,7 @@ var QuickLexRuntime = (() => {
       about.setAttribute("label", "使用说明…");
       about.addEventListener("command", () => {
         Services.prompt.alert(win, `QuickLex ${version}`,
-          "在 Zotero 内置阅读器中双击英文或俄文单词，自动识别语言并显示中文释义。Windows 与 macOS 使用同一 XPI，无需 API Key，查词无需联网。\n\n英文来自 ECDICT；俄汉来自中文维基词典贡献者，经 Kaikki/Wiktextract 提取，以 CC BY-SA 4.0 分发。保留中文原文，部分为繁体。支持音标、多义项及词库收录的词形变化。\n\n只有点击“在线补查”或词条来源才打开浏览器。英文补查打开有道，俄文打开中文维基词典。\n若旧翻译插件也自动弹窗，可关闭旧插件的自动查词。\n\n弹窗耗时仅统计本插件处理，不包含 Zotero 原生弹窗及屏幕绘制。\n当前版本面向 Zotero 10.0；专业术语和语境释义受词库覆盖限制。");
+          "在 Zotero 内置阅读器中双击英文或俄文单词，自动识别语言并显示中文释义。Windows 与 macOS 使用同一 XPI，无需 API Key，查词无需联网。\n\n英文来自 ECDICT；俄汉释义来自中文维基词典贡献者，经 Kaikki/Wiktextract 提取，以 CC BY-SA 4.0 分发。词形索引合并维基词典与 OpenCorpora（原始许可 CC BY-SA 3.0，转换后采用 4.0），已扩充形容词、动词和名词变形。保留中文原文，部分为繁体。支持音标、多义项及词库收录的词形变化。\n\n只有点击“在线补查”或词条来源才打开浏览器。英文补查打开有道，俄文打开中文维基词典。\n若旧翻译插件也自动弹窗，可关闭旧插件的自动查词。\n\n弹窗耗时仅统计本插件处理，不包含 Zotero 原生弹窗及屏幕绘制。\n当前版本面向 Zotero 10.0；专业术语和语境释义受词库覆盖限制。");
       });
       popup.append(toggle, lookup, about);
       menu.append(popup);

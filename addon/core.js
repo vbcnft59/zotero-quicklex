@@ -26,12 +26,12 @@ var QuickLexCore = (() => {
   }
 
   // Identical FNV-1a hash in scripts/build_dictionary.py; supported letters are in the BMP.
-  function shardFor(word) {
+  function shardFor(word, count = 256) {
     let hash = 0x811c9dc5;
     for (let i = 0; i < word.length; i++) {
       hash = Math.imul(hash ^ word.charCodeAt(i), 0x01000193) >>> 0;
     }
-    return (hash & 255).toString(16).padStart(2, "0");
+    return (hash & (count - 1)).toString(16).padStart((count - 1).toString(16).length, "0");
   }
 
   class LRU {
@@ -94,9 +94,10 @@ var QuickLexCore = (() => {
   }
 
   class Dictionary {
-    constructor({ loadJSON, shardLimit = 24, resultLimit = 2048, language = "en" }) {
+    constructor({ loadJSON, shardLimit = 24, resultLimit = 2048, language = "en", shardCount = language === "ru" ? 1024 : 256 }) {
       this.loadJSON = loadJSON;
       this.language = language;
+      this.shardCount = shardCount;
       this.shards = new LRU(shardLimit);
       this.results = new LRU(resultLimit);
       this.pendingShards = new Map();
@@ -145,7 +146,7 @@ var QuickLexCore = (() => {
 
     async shard(word) {
       if (this.disposed) throw new Error("Dictionary is closed");
-      const key = shardFor(word);
+      const key = shardFor(word, this.shardCount);
       const cached = this.shards.get(key);
       if (cached) return cached;
       if (this.pendingShards.has(key)) return this.pendingShards.get(key);

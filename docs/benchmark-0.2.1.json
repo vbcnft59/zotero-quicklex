@@ -1,0 +1,65 @@
+{
+  "measuredAt": "2026-10-14T12:42:47.605Z",
+  "environment": {
+    "node": "v24.18.1",
+    "platform": "win32",
+    "cpu": "AMD Ryzen 9 8945HS w/ Radeon 780M Graphics"
+  },
+  "entries": 399213,
+  "preloadMs": 20.707,
+  "emptyPluginCache": {
+    "n": 20,
+    "medianMs": 2.015,
+    "p95Ms": 4.977,
+    "maxMs": 4.977
+  },
+  "firstLookupAfterPreload": {
+    "n": 20,
+    "medianMs": 0.217,
+    "p95Ms": 4.968,
+    "maxMs": 4.968
+  },
+  "cached": {
+    "n": 1000,
+    "medianMs": 0.002,
+    "p95Ms": 0.004,
+    "maxMs": 0.018
+  },
+  "russian": {
+    "words": [
+      "наука",
+      "мир",
+      "исследование",
+      "исследования",
+      "метод",
+      "методы",
+      "учёный",
+      "ученый",
+      "идёт",
+      "данные",
+      "статистические",
+      "читает",
+      "экономического"
+    ],
+    "emptyPluginCache": {
+      "n": 13,
+      "medianMs": 3.487,
+      "p95Ms": 5.594,
+      "maxMs": 5.594
+    },
+    "firstLookupWithSharedShardCache": {
+      "n": 13,
+      "medianMs": 3.167,
+      "p95Ms": 4.344,
+      "maxMs": 4.344
+    },
+    "cached": {
+      "n": 1000,
+      "medianMs": 0.003,
+      "p95Ms": 0.005,
+      "maxMs": 0.027
+    }
+  },
+  "fileReads": 85,
+  "limits": "Node.js filesystem + JSON parsing only, OS disk cache may be warm; excludes XPI decompression, Zotero native popup delay, DOM rendering, and display. No comparison with the user’s existing plugin has been measured."
+}

@@ -31,10 +31,10 @@ def main():
             archive.writestr(info, path.read_bytes())
     with zipfile.ZipFile(output) as archive:
         required = {"bootstrap.js", "manifest.json", "core.js", "card.js", "runtime.js", "data/hot.json", "data/LICENSE-ECDICT.txt",
-                    "data/ru/metadata.json", "data/ru/LICENSE-CC-BY-SA-4.0.txt"}
+                    "data/ru/metadata.json", "data/ru/LICENSE-CC-BY-SA-4.0.txt", "data/ru/LICENSE-CC-BY-SA-3.0.txt"}
         assert required.issubset(set(archive.namelist()))
         assert len([name for name in archive.namelist() if name.startswith("data/shards/")]) == 256
-        assert len([name for name in archive.namelist() if name.startswith("data/ru/shards/")]) == 256
+        assert len([name for name in archive.namelist() if name.startswith("data/ru/shards/")]) == 1024
         assert all("\\" not in name and not name.startswith("/") for name in archive.namelist())
         assert archive.testzip() is None
         assert json.loads(archive.read("manifest.json"))["applications"]["zotero"]["strict_max_version"] == "10.0.*"

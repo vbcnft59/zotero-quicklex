@@ -72,7 +72,8 @@ async function run() {
     const doc = win.document;
     const holder = doc.createElementNS('http://www.w3.org/1999/xhtml', 'div');
     doc.documentElement.append(holder);
-    for (const [word, expected] of [['novel', '小说'], ['НАУ́КА', '科學'], ['исследования', '研究'], ['ученый', '科學']]) {
+    for (const [word, expected] of [['novel', '小说'], ['НАУ́КА', '科學'], ['исследования', '研究'], ['ученый', '科學'],
+      ['статистические', '统计'], ['читает', '讀'], ['экономического', '经济']]) {
       let card;
       listener.handler({doc, params: {annotation: {text: word}}, append(node) {card = node; holder.replaceChildren(node);} });
       for (let i = 0; i < 300 && !card?.querySelector('.ql-translation'); i++) await Zotero.Promise.delay(10);

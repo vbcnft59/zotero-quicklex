@@ -1,0 +1,24 @@
+{
+  "source": "OpenCorpora contributors",
+  "homepage": "https://opencorpora.org/",
+  "sourceRevision": "417150",
+  "sourceVersion": "0.92",
+  "license": "CC-BY-SA-3.0",
+  "licenseURL": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "adapterLicense": "CC-BY-SA-4.0",
+  "dataPackage": {
+    "name": "pymorphy3-dicts-ru",
+    "version": "2.4.417150.4580142",
+    "file": "pymorphy3_dicts_ru-2.4.417150.4580142-py2.py3-none-any.whl",
+    "url": "https://files.pythonhosted.org/packages/b0/67/469e9e52d046863f5959928794d3067d455a77f580bf4a662630a43eb426/pymorphy3_dicts_ru-2.4.417150.4580142-py2.py3-none-any.whl",
+    "sha256": "718bac64c73c10c16073a199402657283d9b64c04188b694f6d3e9b0d85440f4"
+  },
+  "readerPackage": {
+    "name": "DAWG-Python",
+    "version": "0.7.2",
+    "file": "DAWG_Python-0.7.2-py2.py3-none-any.whl",
+    "url": "https://files.pythonhosted.org/packages/6a/84/ff1ce2071d4c650ec85745766c0047ccc3b5036f1d03559fd46bb38b5eeb/DAWG_Python-0.7.2-py2.py3-none-any.whl",
+    "sha256": "4941d5df081b8d6fcb4597e073a9f60d5c1ccc9d17cd733e8744d7ecfec94ef3"
+  },
+  "transformations": "Retain explicit dictionary paradigms only for headwords with Chinese definitions, generate form-to-headword references and ё variants. No predictions, no new definitions. DAWG-Python is a build-only MIT dependency; no Python or native binaries are bundled in the XPI."
+}

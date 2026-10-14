@@ -31,22 +31,31 @@ def fetch(url, target, expected=None):
 
 def russian_source():
     lock = json.loads((ROOT / "docs/russian-source.json").read_text(encoding="utf-8"))
-    target = CACHE / "ru-zh-wiktionary.jsonl"
-    if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() == lock["sourceSha256"]:
-        print("Verified cached Russian source", flush=True)
+    for spec in lock["sources"]:
+        russian_partition(spec)
+    morphology = json.loads((ROOT / "docs/russian-morphology-source.json").read_text(encoding="utf-8"))
+    for key in ("dataPackage", "readerPackage"):
+        spec = morphology[key]
+        fetch(spec["url"], CACHE / spec["file"], spec["sha256"])
+
+
+def russian_partition(spec):
+    target = CACHE / spec["file"]
+    if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() == spec["sourceSha256"]:
+        print(f"Verified cached Russian source: {target.name}", flush=True)
         return
-    packed = CACHE / "ru-zh-wiktionary.jsonl.gz"
+    packed = target.with_suffix(".jsonl.gz")
     try:
-        fetch(lock["snapshotURL"], packed, lock["snapshotSha256"])
+        fetch(spec["snapshotURL"], packed, spec["snapshotSha256"])
         partial = target.with_suffix(".jsonl.part")
         with gzip.open(packed, "rb") as source, partial.open("wb") as output:
             shutil.copyfileobj(source, output)
-        if hashlib.sha256(partial.read_bytes()).hexdigest() != lock["sourceSha256"]:
+        if hashlib.sha256(partial.read_bytes()).hexdigest() != spec["sourceSha256"]:
             raise SystemExit("Russian snapshot decompression checksum mismatch")
         partial.replace(target)
     except (urllib.error.URLError, TimeoutError):
         # Kaikki's URL changes over time; only accept the exact reviewed snapshot.
-        fetch(lock["upstream"], target, lock["sourceSha256"])
+        fetch(spec["upstream"], target, spec["sourceSha256"])
 
 
 def main():

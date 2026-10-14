@@ -1,6 +1,6 @@
 {
   "name": "zotero-quicklex",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Offline English–Chinese and Russian–Chinese word lookup for Zotero on Windows and macOS",
   "scripts": {

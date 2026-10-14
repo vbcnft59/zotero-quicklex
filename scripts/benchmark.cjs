@@ -38,7 +38,8 @@ async function measure(engine, words) {
   const firstMixed = await measure(engine, words);
   const cached = await measure(engine, Array.from({ length: 1000 }, (_, i) => words[i % words.length]));
   const metadata = JSON.parse(await fs.readFile(path.join(root, 'build/dictionary/metadata.json'), 'utf8'));
-  const ruWords = ['наука', 'мир', 'исследование', 'исследования', 'метод', 'методы', 'учёный', 'ученый', 'идёт', 'данные'];
+  const ruWords = ['наука', 'мир', 'исследование', 'исследования', 'метод', 'методы', 'учёный', 'ученый', 'идёт', 'данные',
+    'статистические', 'читает', 'экономического'];
   const russianCold = [];
   for (const word of ruWords) {
     const ru = new MultilingualDictionary({ loadJSON });

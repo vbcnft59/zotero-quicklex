@@ -56,30 +56,60 @@ test('English-only startup never reads Russian data, then Russian repeated queri
 });
 
 test('Russian compiled Unicode shards and every base reference are consistent', async () => {
+  const metadata = await loadJSON('ru/metadata.json');
   const keys = new Set(), references = [];
-  for (let i = 0; i < 256; i++) {
-    const key = i.toString(16).padStart(2, '0');
+  for (let i = 0; i < metadata.shards; i++) {
+    const key = i.toString(16).padStart(3, '0');
     const data = await loadJSON(`ru/shards/${key}.json`);
     for (const [word, entry] of Object.entries(data.entries)) {
-      assert.equal(shardFor(word), key);
+      assert.equal(shardFor(word, metadata.shards), key);
       assert.equal(normalizeSelection(word), word);
       assert.ok(/[\u3400-\u9fff]/.test(entry[2]));
       assert.ok(entry[4]);
       keys.add(word);
     }
     for (const [word, bases] of Object.entries(data.forms)) {
-      assert.equal(shardFor(word), key);
+      assert.equal(shardFor(word, metadata.shards), key);
       assert.ok(bases.length);
       references.push(...bases);
     }
   }
-  const metadata = await loadJSON('ru/metadata.json');
   assert.equal(keys.size, metadata.entries);
-  assert.ok(keys.size > 5000);
+  assert.ok(keys.size > 90000, 'both Russian language-name partitions must be included');
+  assert.ok(metadata.formKeys > 1000000, 'explicit OpenCorpora paradigms must be included');
   for (const base of references) assert.ok(keys.has(base), base);
   const engine = new Dictionary({ loadJSON: file => loadJSON('ru/' + file), language: 'ru' });
   const withDots = await engine.lookup('учёный');
   const omittedDots = await engine.lookup('ученый');
   assert.ok(withDots.entries.length);
   assert.ok(omittedDots.entries.some(entry => entry.word.includes('ё')));
+});
+
+test('coverage regression: screenshot word and common adjective, noun, and verb forms resolve offline', async () => {
+  const engine = new MultilingualDictionary({ loadJSON });
+  for (const [query, base, meaning] of [
+    ['статистические', 'статистический', '统计'],
+    ['статистическими', 'статистический', '统计'],
+    ['экономического', 'экономический', '经济'],
+    ['церковной', 'церковный', '教会'],
+    ['официальные', 'официальный', '官方'],
+    ['читает', 'читать', '讀'], ['читают', 'читать', '讀'],
+    ['содержали', 'содержать', '含有'], ['которые', 'который', '那個'],
+    ['сведения', 'сведение', '信息'], ['словами', 'слово', '詞'],
+  ]) {
+    const result = await engine.lookup(query);
+    const entry = result.entries.find(item => item.word === base);
+    assert.ok(entry, `${query} -> ${base}`);
+    assert.ok(entry.translation.includes(meaning), `${query}: ${entry.translation}`);
+    assert.equal(result.inferred, false);
+    assert.ok(entry.sourceURL);
+  }
+  engine.dispose();
+});
+
+test('Russian homographs keep multiple indexed headwords', async () => {
+  const engine = new MultilingualDictionary({ loadJSON });
+  const result = await engine.lookup('стали');
+  for (const word of ['сталь', 'стать']) assert.ok(result.entries.some(entry => entry.word === word), word);
+  engine.dispose();
 });

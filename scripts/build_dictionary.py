@@ -18,11 +18,12 @@ def valid(word):
     return len(word) <= 80 and WORD.fullmatch(word) is not None
 
 
-def shard_for(word):
+def shard_for(word, count=256):
     value = 0x811C9DC5
     for char in word:
         value = ((value ^ ord(char)) * 0x01000193) & 0xFFFFFFFF
-    return f"{value & 255:02x}"
+    width = len(f"{count - 1:x}")
+    return f"{value & (count - 1):0{width}x}"
 
 
 def write_json(path, data):
