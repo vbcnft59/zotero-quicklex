@@ -148,8 +148,11 @@ var QuickLexUserDictionary = (() => {
       if (!result.entries.length) {
         // Reuse only explicit bundled form relationships, then read the user's definitions.
         const shard = await this.bundled.shard(query);
-        const records = await Promise.all((shard.forms[query] || []).map(base => custom.entry(base)));
-        if (records.some(Boolean)) result = custom.result(query, records.filter(Boolean));
+        const bases = [...new Set((shard.forms[query] || []).flatMap(base => [base, base.replace(/ё/g, "е")]))];
+        const related = await Promise.all(bases.map(base => custom.lookup(base)));
+        const entries = new Map(related.flatMap(item => item.entries).map(entry => [entry.word, entry]));
+        const records = [...entries.values()].map(entry => [entry.word, entry.phonetic, entry.translation, entry.definition]);
+        if (records.length) result = custom.result(query, records);
         else result = await this.bundled.lookup(query);
       }
       if (!this.closed && custom === this.custom) this.cache.set(query, result);

@@ -12,7 +12,7 @@
 
 ## 自动测试
 
-`npm test`：33 项通过。`python -m unittest discover -s tests -p "test_*.py"`：5 项通过。
+`npm test`：34 项通过。`python -m unittest discover -s tests -p "test_*.py"`：5 项通过。
 
 覆盖全部英俄分片哈希、每条词形引用、大小写与重音、ё/е、中文多义项、例句、安全文本渲染、真实来源链接、缓存、读取重试和停用清理。保留 `статистические`、`читает`、`экономического`、`церковной` 等回归用例。
 
@@ -32,7 +32,7 @@ Windows Zotero 10.0.6 已验证：
 6. 触发真实“恢复内置俄汉词典”菜单命令，卡片重新显示 БРуКС。
 7. 文件选择器模块可加载；原生检查不操纵系统文件选择对话框。
 
-独立报告：`.cache/native-smoke-Windows-AMD64-1791984400620115600/report.json`。测试完成后关闭该隔离客户端。最终 XPI SHA-256：`fea435a23384fe77bfc0e6cbdd835d490ea6ce70479bf2900e6b865649c3c4cf`。
+独立报告：`.cache/native-smoke-Windows-AMD64-1791984643211465300/report.json`。测试完成后关闭该隔离客户端。最终 XPI SHA-256：`8acfb48e5009e085407ce30bd81cd0b950c0b3e6d30f5b670438d700240abc8c`。
 
 ## macOS 与持续集成
 

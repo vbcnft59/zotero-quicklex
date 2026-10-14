@@ -83,6 +83,19 @@ test('failed or interrupted imports preserve the active dictionary and remove pa
   base.dispose();
 });
 
+test('inflection lookup also uses imported headwords printed with е instead of ё', async () => {
+  const state = store(), base = bundled();
+  state.files.set('/imports/test.dsl', Buffer.from('#NAME "省略两点词典"\nученый\n [m1]自备学者义项[/m]\n\n'));
+  const manager = new Manager({ bundled: base, ...state });
+  await manager.importFile('/imports/test.dsl');
+  for (const word of ['ученого', 'учёного', 'учёными']) {
+    const result = await manager.lookup(word);
+    assert.ok(result.source.includes('省略两点词典'));
+    assert.ok(result.entries.some(entry => entry.translation.includes('自备学者义项')));
+  }
+  manager.dispose(); base.dispose();
+});
+
 test('invalid persisted generation cannot escape the plugin directory or trigger recursive deletion', async () => {
   const state = store(), errors = [], base = bundled();
   state.values.set(PREF, '../../library');
