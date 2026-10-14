@@ -31,31 +31,30 @@ def fetch(url, target, expected=None):
 
 def russian_source():
     lock = json.loads((ROOT / "docs/russian-source.json").read_text(encoding="utf-8"))
-    for spec in lock["sources"]:
-        russian_partition(spec)
+    russian_dictionary(lock)
     morphology = json.loads((ROOT / "docs/russian-morphology-source.json").read_text(encoding="utf-8"))
     for key in ("dataPackage", "readerPackage"):
         spec = morphology[key]
         fetch(spec["url"], CACHE / spec["file"], spec["sha256"])
 
 
-def russian_partition(spec):
+def russian_dictionary(spec):
     target = CACHE / spec["file"]
     if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() == spec["sourceSha256"]:
         print(f"Verified cached Russian source: {target.name}", flush=True)
         return
-    packed = target.with_suffix(".jsonl.gz")
+    packed = CACHE / spec["snapshotFile"]
     try:
         fetch(spec["snapshotURL"], packed, spec["snapshotSha256"])
-        partial = target.with_suffix(".jsonl.part")
-        with gzip.open(packed, "rb") as source, partial.open("wb") as output:
-            shutil.copyfileobj(source, output)
-        if hashlib.sha256(partial.read_bytes()).hexdigest() != spec["sourceSha256"]:
-            raise SystemExit("Russian snapshot decompression checksum mismatch")
-        partial.replace(target)
     except (urllib.error.URLError, TimeoutError):
-        # Kaikki's URL changes over time; only accept the exact reviewed snapshot.
-        fetch(spec["upstream"], target, spec["sourceSha256"])
+        # The release mirror may not exist during the first pre-release build.
+        fetch(spec["upstream"], packed, spec["snapshotSha256"])
+    partial = target.with_suffix(".dsl.part")
+    with gzip.open(packed, "rb") as source, partial.open("wb") as output:
+        shutil.copyfileobj(source, output)
+    if hashlib.sha256(partial.read_bytes()).hexdigest() != spec["sourceSha256"]:
+        raise SystemExit("Russian snapshot decompression checksum mismatch")
+    partial.replace(target)
 
 
 def main():

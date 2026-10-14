@@ -72,15 +72,62 @@ async function run() {
     const doc = win.document;
     const holder = doc.createElementNS('http://www.w3.org/1999/xhtml', 'div');
     doc.documentElement.append(holder);
-    for (const [word, expected] of [['novel', '小说'], ['НАУ́КА', '科學'], ['исследования', '研究'], ['ученый', '科學'],
-      ['статистические', '统计'], ['читает', '讀'], ['экономического', '经济']]) {
+    for (const [word, expected] of [['novel', '小说'], ['НАУ́КА', '科学'], ['исследования', '研究'], ['ученый', '科学家'],
+      ['статистические', '统计'], ['читает', '读'], ['экономического', '经济'], ['церковной', '教会']]) {
       let card;
       listener.handler({doc, params: {annotation: {text: word}}, append(node) {card = node; holder.replaceChildren(node);} });
       for (let i = 0; i < 300 && !card?.querySelector('.ql-translation'); i++) await Zotero.Promise.delay(10);
       const text = Array.from(card?.querySelectorAll('.ql-translation') || [], x => x.textContent).join('\n');
       if (!text.includes(expected)) throw new Error('Lookup failed: ' + word + ' / ' + text);
+      if (word !== 'novel' && (!card.textContent.includes('БРуКС') || card.textContent.includes('维基词典'))) {
+        throw new Error('Wrong Russian source attribution: ' + word);
+      }
       report.checks.push({word, text, source: card.querySelector('.ql-time').textContent});
     }
+    const { FilePicker } = ChromeUtils.importESModule('chrome://zotero/content/modules/filePicker.mjs');
+    if (typeof FilePicker !== 'function') throw new Error('Native dictionary picker unavailable');
+    if (PathUtils.profileDir !== PROFILE) throw new Error('Unexpected profile path; refusing dictionary writes');
+    const scope = {};
+    for (const file of ['core.js', 'user-dictionary.js']) {
+      Services.scriptloader.loadSubScript(plugin.getResourceURI().spec + file, scope, 'UTF-8');
+    }
+    const bundled = new scope.QuickLexCore.Dictionary({ language: 'ru',
+      loadJSON: async file => JSON.parse(await Zotero.File.getResourceAsync(plugin.getResourceURI().spec + 'data/ru/' + file)) });
+    const manager = new scope.QuickLexUserDictionary.Manager({ bundled, prefs: Services.prefs,
+      getStorage: () => ({ io: IOUtils, paths: PathUtils, root: PathUtils.join(PathUtils.profileDir, 'quicklex'), Decoder: TextDecoder }),
+      yieldTask: () => Zotero.Promise.delay(0) });
+    const fixture = PathUtils.join(PathUtils.parent(output), '俄汉测试.dsl');
+    await IOUtils.writeUTF8(fixture, '#NAME "本地测试词典"\nстатистический\n [m1]自备统计释义[/m]\n\n');
+    const imported = await manager.importFile(fixture);
+    if (imported.entries !== 1 || !(await manager.lookup('статистические')).entries[0].translation.includes('自备统计释义')) {
+      throw new Error('Native local DSL import/inflection lookup failed');
+    }
+    manager.dispose(); bundled.dispose();
+    await plugin.disable();
+    await plugin.enable();
+    for (let i = 0; i < 200; i++) {
+      listener = Zotero.Reader._registeredListeners.find(x => x.pluginID === PLUGIN_ID && x.type === 'renderTextSelectionPopup');
+      if (listener && doc.getElementById('quicklex-tools-menu')) break;
+      await Zotero.Promise.delay(100);
+    }
+    let importedCard;
+    listener.handler({doc, params: {annotation: {text: 'статистические'}}, append(node) { importedCard = node; holder.replaceChildren(node); } });
+    for (let i = 0; i < 300 && !importedCard?.querySelector('.ql-translation'); i++) await Zotero.Promise.delay(10);
+    if (!importedCard?.textContent.includes('自备统计释义') || !importedCard.textContent.includes('本地测试词典')) {
+      throw new Error('Imported dictionary not restored in reader after plugin restart');
+    }
+    report.importedDictionary = { entries: imported.entries, persistedAfterRestart: true, inflection: 'статистические' };
+    const reset = Array.from(doc.getElementById('quicklex-tools-menu').querySelectorAll('menuitem'))
+      .find(node => node.getAttribute('label') === '恢复内置俄汉词典');
+    reset.doCommand();
+    for (let i = 0; i < 200 && Services.prefs.getStringPref('extensions.quicklex.userDictionary', ''); i++) await Zotero.Promise.delay(10);
+    let restoredCard;
+    listener.handler({doc, params: {annotation: {text: 'статистические'}}, append(node) { restoredCard = node; holder.replaceChildren(node); } });
+    for (let i = 0; i < 300 && !restoredCard?.querySelector('.ql-translation'); i++) await Zotero.Promise.delay(10);
+    if (!restoredCard?.textContent.includes('БРуКС') || restoredCard.textContent.includes('自备统计释义')) {
+      throw new Error('Restore bundled dictionary command failed');
+    }
+    report.importedDictionary.resetToBundled = true;
     holder.remove();
     report.passed = true;
   } catch (error) {
@@ -92,11 +139,11 @@ async function run() {
   Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
 }
 """
-    replacements = {"OUTPUT": str(report_path), "DATA": str(data), "MARKER": str(marker),
+    replacements = {"OUTPUT": str(report_path), "DATA": str(data), "MARKER": str(marker), "PROFILE": str(profile),
                     "PLUGIN_ID": plugin_id, "VERSION": manifest["version"]}
     # Exact uppercase tokens only, replaced before writing an executable test script.
     import re
-    script = re.sub(r"\b(?:OUTPUT|DATA|MARKER|PLUGIN_ID|VERSION)\b",
+    script = re.sub(r"\b(?:OUTPUT|DATA|MARKER|PROFILE|PLUGIN_ID|VERSION)\b",
                     lambda match: json.dumps(replacements[match.group()]), script)
     probe_source = folder / "probe-bootstrap.js"
     probe_source.write_text(script, encoding="utf-8", newline="\n")

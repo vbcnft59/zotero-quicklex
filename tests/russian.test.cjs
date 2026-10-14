@@ -13,13 +13,13 @@ test('Russian selection handles accents, ё, й, guillemets, PDF wrapping, and r
   ]) assert.equal(normalizeSelection(input), expected, input);
   assert.equal(languageFor('наука'), 'ru');
   assert.equal(languageFor('science'), 'en');
-  assert.equal(onlineURL('мир'), 'https://zh.wiktionary.org/wiki/' + encodeURIComponent('мир'));
+  assert.equal(onlineURL('мир'), 'https://bkrs.info/slovo.php?ch=' + encodeURIComponent('мир'));
 });
 
-test('real Russian dictionary retains Chinese senses, pronunciation, attribution, and indexed forms', async () => {
+test('real БРуКС dictionary retains Chinese senses, examples, attribution, and indexed forms', async () => {
   const engine = new MultilingualDictionary({ loadJSON });
   for (const [word, base, meaning] of [
-    ['НАУ́КА', 'наука', '科學'], ['мира', 'мир', '和平'], ['исследования', 'исследование', '研究'],
+    ['НАУ́КА', 'наука', '科学'], ['мира', 'мир', '和平'], ['исследования', 'исследование', '研究'],
     ['методы', 'метод', '方法'], ['идёт', 'идти', '走'],
   ]) {
     const result = await engine.lookup(word);
@@ -27,13 +27,13 @@ test('real Russian dictionary retains Chinese senses, pronunciation, attribution
     assert.ok(entry, `${word} -> ${base}`);
     assert.ok(entry.translation.includes(meaning), entry.translation);
     assert.equal(result.language, 'ru');
-    assert.equal(result.license, 'CC BY-SA 4.0');
+    assert.equal(result.license, 'BKRS 自由使用声明');
     assert.equal(result.inferred, false);
-    assert.ok(entry.sourceURL.startsWith('https://zh.wiktionary.org/wiki/'));
+    assert.ok(entry.sourceURL.startsWith('https://bkrs.info/slovo.php?ch='));
   }
   const world = await engine.lookup('мир');
   assert.ok(world.entries[0].translation.includes('世界'));
-  assert.ok(world.entries[0].phonetic);
+  assert.ok(world.entries[0].translation.includes('例：'));
   assert.ok((await engine.lookup('novel')).entries[0].translation.includes('小说'));
   assert.deepEqual((await engine.lookup('ъъъъъъ')).entries, []);
   engine.dispose();
@@ -75,7 +75,8 @@ test('Russian compiled Unicode shards and every base reference are consistent', 
     }
   }
   assert.equal(keys.size, metadata.entries);
-  assert.ok(keys.size > 90000, 'both Russian language-name partitions must be included');
+  assert.ok(keys.size > 110000, 'БРуКС headwords must replace the old Wiktionary dataset');
+  assert.equal(metadata.name, 'БРуКС / BKRS.info');
   assert.ok(metadata.formKeys > 1000000, 'explicit OpenCorpora paradigms must be included');
   for (const base of references) assert.ok(keys.has(base), base);
   const engine = new Dictionary({ loadJSON: file => loadJSON('ru/' + file), language: 'ru' });
@@ -92,10 +93,10 @@ test('coverage regression: screenshot word and common adjective, noun, and verb 
     ['статистическими', 'статистический', '统计'],
     ['экономического', 'экономический', '经济'],
     ['церковной', 'церковный', '教会'],
-    ['официальные', 'официальный', '官方'],
-    ['читает', 'читать', '讀'], ['читают', 'читать', '讀'],
-    ['содержали', 'содержать', '含有'], ['которые', 'который', '那個'],
-    ['сведения', 'сведение', '信息'], ['словами', 'слово', '詞'],
+    ['официальные', 'официальный', '正式'],
+    ['читает', 'читать', '读'], ['читают', 'читать', '读'],
+    ['содержали', 'содержать', '含'], ['которые', 'который', '哪'],
+    ['сведения', 'сведение', '资料'], ['словами', 'слово', '词'],
   ]) {
     const result = await engine.lookup(query);
     const entry = result.entries.find(item => item.word === base);

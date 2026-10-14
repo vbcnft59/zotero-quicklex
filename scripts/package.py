@@ -30,8 +30,8 @@ def main():
             info.compress_type = zipfile.ZIP_DEFLATED
             archive.writestr(info, path.read_bytes())
     with zipfile.ZipFile(output) as archive:
-        required = {"bootstrap.js", "manifest.json", "core.js", "card.js", "runtime.js", "data/hot.json", "data/LICENSE-ECDICT.txt",
-                    "data/ru/metadata.json", "data/ru/LICENSE-CC-BY-SA-4.0.txt", "data/ru/LICENSE-CC-BY-SA-3.0.txt"}
+        required = {"bootstrap.js", "manifest.json", "core.js", "card.js", "runtime.js", "user-dictionary.js", "data/hot.json", "data/LICENSE-ECDICT.txt",
+                    "data/ru/metadata.json", "data/ru/LICENSE-BKRS.txt", "data/ru/LICENSE-CC-BY-SA-4.0.txt", "data/ru/LICENSE-CC-BY-SA-3.0.txt"}
         assert required.issubset(set(archive.namelist()))
         assert len([name for name in archive.namelist() if name.startswith("data/shards/")]) == 256
         assert len([name for name in archive.namelist() if name.startswith("data/ru/shards/")]) == 1024

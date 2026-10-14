@@ -61,10 +61,10 @@ var QuickLexCard = (() => {
     body.setAttribute("tabindex", "0");
     body.append(node(doc, "div", "ql-status", "正在读取本地词典…"));
     const footer = node(doc, "div", "ql-footer");
-    const timing = node(doc, "span", "ql-time", russian ? "维基词典 · 俄汉" : "ECDICT 本地词典");
+    const timing = node(doc, "span", "ql-time", russian ? "БРуКС · 俄汉" : "ECDICT 本地词典");
     const online = node(doc, "button", "ql-link", "在线补查 ↗");
     online.type = "button";
-    online.title = russian ? "在浏览器打开中文维基词典，仅发送当前单词" : "在浏览器打开有道词典，仅发送当前单词";
+    online.title = russian ? "在浏览器打开 BKRS 俄汉词典，仅发送当前单词" : "在浏览器打开有道词典，仅发送当前单词";
     online.addEventListener("click", event => { event.preventDefault(); onOnline(query); });
     footer.append(timing, online);
     root.append(style, header, body, footer);
@@ -92,9 +92,9 @@ var QuickLexCard = (() => {
         if (entry.phonetic) section.append(node(doc, "div", "ql-phonetic", "/" + entry.phonetic.replace(/^\/|\/$/g, "") + "/"));
         section.append(node(doc, "div", "ql-translation", entry.translation));
         if (entry.sourceURL) {
-          const credit = node(doc, "button", "ql-link", "维基词典贡献者 · CC BY-SA 4.0 ↗");
+          const credit = node(doc, "button", "ql-link", result.attribution + " ↗");
           credit.type = "button";
-          credit.title = "查看原词条及贡献者历史；本地释义经筛选、合并和分片";
+          credit.title = "查看原词条；词库依据 BKRS 自由使用声明转换并分片";
           credit.addEventListener("click", event => { event.preventDefault(); onSource(entry.sourceURL); });
           section.append(credit);
         }

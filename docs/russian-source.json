@@ -1,36 +1,17 @@
 {
-  "edition": "zhwiktionary",
-  "language": "ru",
-  "dumpDate": "2026-10-01",
-  "extractedAt": "2026-10-02",
-  "extractorRevision": "1a05e46",
-  "postprocessorRevision": "e3d6d4e",
-  "upstream": "https://kaikki.org/zhwiktionary/%E4%BF%84%E8%AA%9E/kaikki.org-dictionary-%E4%BF%84%E8%AA%9E.jsonl",
-  "sourceSha256": "4fbef5d5c41566662a19faefbfeb2d7a13c14b7a5909ea1eb20126d62138a776",
-  "snapshotURL": "https://github.com/vbcnft59/zotero-quicklex/releases/download/v0.2.0/ru-zh-wiktionary-20261001.jsonl.gz",
-  "snapshotSha256": "a3fcaa5354708cf50603d58cbcfdca92d8b3b683600391277241cd5dcf41fae5",
-  "license": "CC-BY-SA-4.0",
-  "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0/",
-  "attribution": "Chinese Wiktionary contributors; extracted by Kaikki.org / Wiktextract",
-  "pageURLTemplate": "https://zh.wiktionary.org/wiki/{sourcePage}",
-  "modifications": "QuickLex preserves the upstream snapshot byte-for-byte, compressed with gzip. Generated dictionary adaptations are also CC BY-SA 4.0.",
-  "sources": [
-    {
-      "id": "traditional-label",
-      "file": "ru-zh-wiktionary.jsonl",
-      "upstream": "https://kaikki.org/zhwiktionary/%E4%BF%84%E8%AA%9E/kaikki.org-dictionary-%E4%BF%84%E8%AA%9E.jsonl",
-      "sourceSha256": "4fbef5d5c41566662a19faefbfeb2d7a13c14b7a5909ea1eb20126d62138a776",
-      "snapshotURL": "https://github.com/vbcnft59/zotero-quicklex/releases/download/v0.2.0/ru-zh-wiktionary-20261001.jsonl.gz",
-      "snapshotSha256": "a3fcaa5354708cf50603d58cbcfdca92d8b3b683600391277241cd5dcf41fae5"
-    },
-    {
-      "id": "simplified-label",
-      "file": "ru-zh-wiktionary-simplified.jsonl",
-      "upstream": "https://kaikki.org/zhwiktionary/%E4%BF%84%E8%AF%AD/kaikki.org-dictionary-%E4%BF%84%E8%AF%AD.jsonl",
-      "sourceSha256": "9100551739b9fb467361689a7efcd91058bfff1ded677b40396512b922f9fa5d",
-      "snapshotURL": "https://github.com/vbcnft59/zotero-quicklex/releases/download/v0.2.1/ru-zh-wiktionary-simplified-20261001.jsonl.gz",
-      "snapshotSha256": "df6f99d7652de5d0640b0459d636968dff9c923bebda8d813815c4dd145aa538"
-    }
-  ],
-  "scope": "Merge both Russian language-name partitions, 俄語 and 俄语, filtered by lang_code=ru; neither partition alone is complete."
+  "dictionary": "БРуКС (Russian–Chinese), BKRS.info",
+  "sourceDate": "2026-10-14",
+  "format": "DSL, UTF-8 with BOM",
+  "file": "dabruks_261014.dsl",
+  "sourceSha256": "05b12f055f1bb29de9dfdded419b94f5e31ab7cf86b1fa18545f7c2f2e2e3e2b",
+  "sourceBytes": 27044702,
+  "upstream": "https://bkrs.info/downloads/daily/dabruks_261014.gz",
+  "snapshotFile": "dabruks_261014.gz",
+  "snapshotSha256": "e2543edfd22498d2a9c346cb9ee84c958ad2196bd30d2c2b687029d6d8818412",
+  "snapshotBytes": 8135870,
+  "snapshotURL": "https://github.com/vbcnft59/zotero-quicklex/releases/download/v0.3.0/dabruks_261014.gz",
+  "permissionURL": "https://bkrs.info/p47",
+  "distributionURL": "https://bkrs.info/w/бкрс/распространение",
+  "license": "BKRS.info free-use and redistribution permission; see LICENSE-BKRS.txt",
+  "licenseFile": "docs/licenses/BKRS-PERMISSION.txt"
 }

@@ -1,0 +1,18 @@
+БРуКС / BKRS.info dictionary data permission
+Retrieved 2026-10-14 from https://bkrs.info/p47
+
+Original statement on the official download page:
+Базы можно использовать свободно в любых целях. Можно указать данный сайт как источник.
+
+English translation for convenience: The databases may be used freely for any
+purpose. This website may be cited as the source.
+
+The official distribution page also describes the dictionary as open and freely
+redistributable and describes conversion of its structured text to other formats:
+https://bkrs.info/w/бкрс/распространение
+
+QuickLex attributes the Russian-Chinese definitions to БРуКС / BKRS.info and its
+contributors. Its DSL-to-text conversion is published in scripts/build_russian.py.
+This is the source's own permission statement, not an MIT or Creative Commons
+license. It applies to the dictionary articles, independently of the OpenCorpora
+form index (CC BY-SA 3.0, adapted index CC BY-SA 4.0) and QuickLex code (MIT).

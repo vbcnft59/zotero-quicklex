@@ -9,10 +9,20 @@ async function startup({ id, version, rootURI }) {
   const addon = await AddonManager.getAddonByID(id);
   if (addon) addon.applyBackgroundUpdates = AddonManager.AUTOUPDATE_DISABLE;
   quickLexScope = {};
-  for (const file of ["core.js", "card.js", "runtime.js"]) {
+  for (const file of ["core.js", "card.js", "user-dictionary.js", "runtime.js"]) {
     Services.scriptloader.loadSubScript(rootURI + file, quickLexScope, "UTF-8");
   }
-  quickLexInstance = quickLexScope.QuickLexRuntime.create({ Zotero, Services, rootURI, id, version });
+  quickLexInstance = quickLexScope.QuickLexRuntime.create({ Zotero, Services, rootURI, id, version,
+    getStorage: () => ({ io: IOUtils, paths: PathUtils, root: PathUtils.join(PathUtils.profileDir, "quicklex"), Decoder: TextDecoder }),
+    pickDictionary: async win => {
+      const { FilePicker } = ChromeUtils.importESModule("chrome://zotero/content/modules/filePicker.mjs");
+      const picker = new FilePicker();
+      picker.init(win, "导入俄汉 DSL 词典", picker.modeOpen);
+      picker.appendFilter("DSL 词典文本", "*.dsl");
+      if (await picker.show() !== picker.returnOK) return null;
+      return picker.file;
+    },
+  });
   quickLexInstance.start();
 }
 
