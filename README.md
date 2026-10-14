@@ -2,6 +2,8 @@
 
 **简体中文** | [English](README.en.md)
 
+> **这是俄语功能分支 `russian`（英汉 + 俄汉 + DSL 导入）。** 常规英汉版请使用 [`main` 分支](https://github.com/vbcnft59/zotero-quicklex/tree/main) 和 [v0.3.1 安装包](https://github.com/vbcnft59/zotero-quicklex/releases/tag/v0.3.1)。两版使用同一插件 ID，安装另一版会切换版本。
+
 面向 **Zotero 10.0** 的离线英汉 / 俄汉查词插件，**Windows 与 macOS 使用同一个 XPI**。双击英文或俄文单词，在 Zotero 原生选词弹窗中显示中文释义。自动识别语言，无需联网、无需 API Key。
 
 **当前为 0.3.0 公开试用版。** 俄汉释义已从维基词典更换为 **БРуКС / BKRS.info**，包含 **122,937 个俄汉单词词条**、中文义项、拼音和例句；保留变格、变位查询。新增 **DSL 俄汉词典导入**，可优先使用自己的离线词典。英文查词继续使用 ECDICT。

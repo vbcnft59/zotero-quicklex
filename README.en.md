@@ -2,6 +2,8 @@
 
 [简体中文](README.md) | **English**
 
+> **This is the `russian` branch (English–Chinese + Russian–Chinese + DSL import).** For the regular English–Chinese edition, use [`main`](https://github.com/vbcnft59/zotero-quicklex/tree/main) and [v0.3.1](https://github.com/vbcnft59/zotero-quicklex/releases/tag/v0.3.1). The editions share an add-on ID; installing one switches editions.
+
 An offline **English–Chinese and Russian–Chinese** dictionary plugin for **Zotero 10.0**. **Windows and macOS use the same XPI.** Double-click an English or Russian word to see Chinese definitions in Zotero’s native selection popup. Language detection is automatic; no network connection or API key is required.
 
 **Version 0.3.0 is a public preview.** Russian definitions now come from **БРуКС / BKRS.info**, replacing Wiktionary. It includes **122,937 Russian single-word articles**, Chinese senses, pinyin, and examples, plus inflection lookup. You can also **import a local Russian–Chinese DSL dictionary**. English lookup still uses ECDICT.
