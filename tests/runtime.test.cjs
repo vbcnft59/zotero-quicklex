@@ -20,7 +20,7 @@ class Element {
   find(predicate) { return this.children.flatMap(child => [ ...(predicate(child) ? [child] : []), ...child.find(predicate) ]); }
 }
 
-async function harness(loader) {
+async function harness(loader, { rootURI = 'jar:file:///extensions/quicklex@translatezotero.local.xpi!/', isMac = false } = {}) {
   const document = {
     createElementNS(ns, tag) { return new Element(this, tag); },
     createXULElement(tag) { return new Element(this, tag); },
@@ -30,8 +30,8 @@ async function harness(loader) {
   const tools = document.createXULElement('menupopup'); tools.id = 'menu_ToolsPopup'; document.body.append(tools);
   const win = { document, closed: false };
   const listeners = new Map(), prefs = new Map(), launched = [], errors = [];
-  const rootURI = 'jar:file:///extensions/quicklex@translatezotero.local.xpi!/';
   const Zotero = {
+    isMac,
     initializationPromise: Promise.resolve(),
     Reader: { registerEventListener(type, fn) { listeners.set(type, fn); }, unregisterEventListener(type, fn) { assert.equal(listeners.get(type), fn); listeners.delete(type); } },
     getMainWindows: () => [win],
@@ -57,13 +57,13 @@ async function harness(loader) {
   } };
   const scope = vm.createContext({ Zotero, Services, ChromeUtils });
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../addon/bootstrap.js'), 'utf8'), scope);
-  await scope.startup({ id: 'quicklex@test', version: '0.1.0', rootURI });
+  await scope.startup({ id: 'quicklex@test', version: '0.2.0', rootURI });
   function select(text) {
     let card;
     listeners.get('renderTextSelectionPopup')?.({ doc: document, params: { annotation: { text } }, append(element) { card = element; document.body.append(element); } });
     return card;
   }
-  return { scope, document, listeners, prefs, launched, errors, select, addon };
+  return { scope, document, listeners, prefs, launched, errors, select, addon, Services, win };
 }
 
 test('bootstrap loads scripts; reader selection renders definitions safely; shutdown cleans up', async () => {
@@ -137,4 +137,46 @@ test('read error displays a retry action and successful retry updates the card',
   assert.ok(card.textContent.includes('小说'));
   assert.equal(app.errors.length, 1);
   app.scope.shutdown();
+});
+
+test('Russian reader cards show Chinese senses and source links; online lookup is explicit', async () => {
+  const reads = [];
+  const app = await harness(async file => {
+    reads.push(file);
+    return file.startsWith('ru/')
+      ? { entries: { наука: ['наука', 'nɐˈukə', '科學；課程', '', 'наука'] }, forms: {} }
+      : { entries: {}, forms: {} };
+  });
+  await tick();
+  assert.deepEqual(reads, ['hot.json']);
+  const card = app.select('«НАУ́КА»');
+  await tick();
+  assert.ok(card.textContent.includes('科學；課程'));
+  assert.ok(card.textContent.includes('维基词典'));
+  assert.ok(card.textContent.includes('CC BY-SA 4.0'));
+  assert.equal(card.getAttribute('aria-label'), 'QuickLex 俄汉速查');
+  assert.equal(card.find(node => node.tagName === 'summary').length, 0);
+  assert.equal(app.launched.length, 0);
+  card.find(node => node.textContent === '在线补查 ↗')[0].fire('click');
+  assert.equal(app.launched[0], 'https://zh.wiktionary.org/wiki/' + encodeURIComponent('наука'));
+  app.scope.shutdown();
+});
+
+test('macOS-style installed paths with spaces/Unicode load data, register menus, and support manual Russian lookup', async () => {
+  const data = { entries: { наука: ['наука', '', '科學', '', 'наука'] }, forms: {} };
+  const app = await harness(async () => data, {
+    isMac: true,
+    rootURI: 'jar:file:///Users/reader/Library/Application%20Support/Zotero/Profiles/%E6%B5%8B%E8%AF%95/extensions/quicklex@translatezotero.local.xpi!/',
+  });
+  await tick();
+  const alerts = [];
+  app.Services.prompt.prompt = (win, title, text, input) => { input.value = 'НАУ́КА'; return true; };
+  app.Services.prompt.alert = (win, title, text) => alerts.push(text);
+  app.document.body.find(node => node.getAttribute('label') === '查一个单词…')[0].fire('command');
+  await tick();
+  assert.ok(alerts[0].includes('科學'));
+  assert.ok(alerts[0].includes('CC BY-SA 4.0'));
+  app.scope.shutdown();
+  assert.equal(app.document.getElementById('quicklex-tools-menu'), undefined);
+  assert.equal(app.errors.length, 0);
 });

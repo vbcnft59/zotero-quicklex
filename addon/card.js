@@ -6,7 +6,7 @@ var QuickLexCard = (() => {
     .quicklex-card { box-sizing:border-box; width:330px; max-width:calc(100vw - 48px);
       min-width:240px; padding:13px 14px 10px; text-align:left; white-space:normal;
       color:var(--fill-primary, #20252e); background:var(--material-background, #fff);
-      font:13px/1.65 system-ui, 'Microsoft YaHei', sans-serif; border-radius:7px;
+      font:13px/1.65 system-ui, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; border-radius:7px;
       user-select:text; cursor:auto; color-scheme:light dark; }
     .quicklex-card * { box-sizing:border-box; }
     .quicklex-card .ql-header { display:flex; align-items:baseline; justify-content:space-between;
@@ -47,9 +47,10 @@ var QuickLexCard = (() => {
     return element;
   }
 
-  function create(doc, query, { onOnline = () => {} } = {}) {
+  function create(doc, query, { onOnline = () => {}, onSource = () => {} } = {}) {
+    const russian = QuickLexCore.languageFor(query) === "ru";
     const root = node(doc, "section", "quicklex-card");
-    root.setAttribute("aria-label", "QuickLex 英汉速查");
+    root.setAttribute("aria-label", russian ? "QuickLex 俄汉速查" : "QuickLex 英汉速查");
     root.setAttribute("data-quicklex", "true");
     const style = node(doc, "style");
     style.textContent = CSS;
@@ -60,10 +61,10 @@ var QuickLexCard = (() => {
     body.setAttribute("tabindex", "0");
     body.append(node(doc, "div", "ql-status", "正在读取本地词典…"));
     const footer = node(doc, "div", "ql-footer");
-    const timing = node(doc, "span", "ql-time", "ECDICT 本地词典");
+    const timing = node(doc, "span", "ql-time", russian ? "维基词典 · 俄汉" : "ECDICT 本地词典");
     const online = node(doc, "button", "ql-link", "在线补查 ↗");
     online.type = "button";
-    online.title = "在浏览器打开有道词典，仅发送当前单词";
+    online.title = russian ? "在浏览器打开中文维基词典，仅发送当前单词" : "在浏览器打开有道词典，仅发送当前单词";
     online.addEventListener("click", event => { event.preventDefault(); onOnline(query); });
     footer.append(timing, online);
     root.append(style, header, body, footer);
@@ -90,6 +91,13 @@ var QuickLexCard = (() => {
         }
         if (entry.phonetic) section.append(node(doc, "div", "ql-phonetic", "/" + entry.phonetic.replace(/^\/|\/$/g, "") + "/"));
         section.append(node(doc, "div", "ql-translation", entry.translation));
+        if (entry.sourceURL) {
+          const credit = node(doc, "button", "ql-link", "维基词典贡献者 · CC BY-SA 4.0 ↗");
+          credit.type = "button";
+          credit.title = "查看原词条及贡献者历史；本地释义经筛选、合并和分片";
+          credit.addEventListener("click", event => { event.preventDefault(); onSource(entry.sourceURL); });
+          section.append(credit);
+        }
         if (entry.definition) {
           const details = node(doc, "details");
           details.append(node(doc, "summary", "", "展开英文释义"), node(doc, "div", "ql-english", entry.definition));
@@ -97,7 +105,7 @@ var QuickLexCard = (() => {
         }
         body.append(section);
       }
-      timing.textContent = `ECDICT · 本地查询 ${Math.max(0, elapsed).toFixed(1)} ms`;
+      timing.textContent = `${result.source} · 本地查询 ${Math.max(0, elapsed).toFixed(1)} ms`;
       timing.title = "从插件收到选词事件到释义填入的耗时，不含 Zotero 原生选词弹窗等待和屏幕绘制。";
     }
 

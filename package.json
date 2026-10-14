@@ -1,12 +1,12 @@
 {
   "name": "zotero-quicklex",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
-  "description": "Offline English–Chinese word lookup for Zotero",
+  "description": "Offline English–Chinese and Russian–Chinese word lookup for Zotero on Windows and macOS",
   "scripts": {
     "dictionary": "python scripts/build_dictionary.py",
     "build": "python scripts/package.py",
-    "test": "node --test tests/*.test.cjs",
+    "test": "node --test tests/core.test.cjs tests/runtime.test.cjs tests/manifest.test.cjs tests/russian.test.cjs",
     "benchmark": "node scripts/benchmark.cjs"
   }
 }

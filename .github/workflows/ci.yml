@@ -1,0 +1,52 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15, macos-15-intel, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download pinned dictionaries
+        run: python scripts/download_sources.py
+      - name: Compile dictionaries
+        run: python scripts/build_dictionary.py
+      - name: Test Russian data extraction
+        run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Test lookup engine and plugin lifecycle
+        run: npm test
+      - name: Build universal XPI
+        run: python scripts/package.py
+      - name: Load release XPI in Zotero 10.0.6 on macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 -o "$RUNNER_TEMP/Zotero.dmg" https://download.zotero.org/client/release/10.0.6/Zotero-10.0.6.dmg
+          hdiutil attach "$RUNNER_TEMP/Zotero.dmg" -mountpoint "$RUNNER_TEMP/quicklex-zotero" -nobrowse -readonly
+          python scripts/native_smoke.py --executable "$RUNNER_TEMP/quicklex-zotero/Zotero.app/Contents/MacOS/zotero"
+          hdiutil detach "$RUNNER_TEMP/quicklex-zotero"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quicklex-${{ matrix.os }}
+          include-hidden-files: true
+          path: |
+            dist/quicklex-*.xpi*
+            .cache/native-smoke-*/report.json
+            .cache/native-smoke-*/zotero.log

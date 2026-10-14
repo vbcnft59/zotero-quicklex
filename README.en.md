@@ -2,83 +2,87 @@
 
 [简体中文](README.md) | **English**
 
-An offline English–Chinese dictionary plugin for **Zotero 10.0**, with activation and manual lookup verified on **10.0.6**. QuickLex aims to reduce the wait for definitions by looking up words locally instead of contacting an online translation service for every selection.
+An offline **English–Chinese and Russian–Chinese** dictionary plugin for **Zotero 10.0**. **Windows and macOS use the same XPI.** Double-click an English or Russian word to see Chinese definitions in Zotero's native selection popup. Language detection is automatic. Both dictionaries are bundled, with no API key or network connection required for automatic lookup.
 
-**Version 0.1.1 is a public preview.** Client activation and manual lookup have been verified, and the screenshot below shows the reader selection popup in use. Broader testing across operating systems and PDF types is still needed. Please report issues with your Zotero version, operating system, and steps to reproduce the problem.
+**Version 0.2.0 is a public preview.** It preserves English lookup, adds Russian → Chinese, and provides macOS installation instructions and cross-platform build/client checks. Report issues with your Zotero version, operating system, selected word, and reproduction steps.
 
-Double-click an English word in Zotero's built-in reader to display Chinese definitions in the native selection popup. Selecting a single word by dragging also triggers lookup; sentences and multiword phrases do not. The dictionary is bundled with the XPI, so automatic lookup works offline and requires no API key.
+## Installation: Windows / macOS
 
-## Installation
+1. Download **`quicklex-0.2.0.xpi`** from **Assets** on the [v0.2.0 release](https://github.com/vbcnft59/zotero-quicklex/releases/tag/v0.2.0). Do not extract it. Intel Macs, Apple Silicon Macs, and Windows use the same file.
+2. In **Zotero desktop**, open **Tools → Plugins** (or Add-ons), click the gear menu, and choose **Install from file**. On macOS, Tools is in the menu bar at the top of the screen.
+3. Install the newer XPI over an existing QuickLex installation. Restart Zotero if updated features do not appear.
+4. Open a PDF with selectable text and double-click `novel`, `наука`, or `исследования`. Selecting one word by dragging also works; no language switch is needed.
+5. **Tools → QuickLex 速查 → 查一个单词…** (Look up a word…) accepts English and Russian. The same menu toggles automatic definitions.
 
-1. Open this repository's **Releases**, select **v0.1.1**, and download **`quicklex-0.1.1.xpi`** from **Assets**. Do not extract it. If version 0.1.0 failed to install, use this version instead.
-2. In Zotero, open **Tools → Plugins** (or **Add-ons**), click the gear menu, and choose **Install from file**. Select the XPI.
-3. Open an English PDF with selectable text and try double-clicking a word such as `novel` or `binding`.
-4. Under **Tools → QuickLex 速查**, toggle automatic definitions or choose **查一个单词…** (Look up a word…) to check that the local dictionary is working.
+Requires **Zotero 10.0.x**. Check its About window; other major versions are outside this compatibility range. GitHub **Source code (zip/tar.gz)** downloads are development source; choose **`.xpi`** to install. A `.sha256` file accompanies the package.
 
-If another translation plugin also opens a popup, you can turn off its automatic lookup to compare the behavior. QuickLex can be disabled or removed through Zotero's plugin manager.
-
-Version 0.1.1 fixes an installation failure caused by the missing HTTPS `applications.zotero.update_url` field required by Zotero 10. In 0.1.0, the installer returned `ERROR_CORRUPT_FILE (-3)` and displayed a generic compatibility warning. This preview is updated manually by installing a newer XPI; it disables its own background updates at startup. The manifest uses the reserved domain `quicklex.invalid` as a placeholder, so there is no automatic update service and manually checking for plugin updates will fail.
-
-Download the **`.xpi`** asset to install the plugin. GitHub's **Source code (zip/tar.gz)** archives contain development source and cannot be installed directly. A `.sha256` file is also provided to verify the download.
+This preview is updated manually by installing a new XPI and disables its own background updates. The reserved `quicklex.invalid` update address is a placeholder, so manually checking for updates will fail. The 0.1.1 fix for the missing HTTPS update address in 0.1.0 is retained. If another translation plugin opens a popup, you can disable its automatic lookup. QuickLex can be disabled or removed through Zotero's plugin manager.
 
 ![QuickLex word lookup in the Zotero reader](展示图.png)
 
+The screenshot shows English lookup. Russian uses the same card position, with Russian–Chinese source information and an attribution link.
+
 ## Features
 
-- **399,213 local entries:** Definitions, phonetic transcriptions, and English explanations from [ECDICT](https://github.com/skywind3000/ECDICT).
-- **Common-word preload:** Loads 8,000 common entries asynchronously at startup. Other entries are distributed across 256 balanced shards and loaded as needed.
-- **Lookup cache:** Keeps up to 2,048 query results and 24 dictionary shards in memory, while sharing concurrent reads for the same query or shard.
-- **Multiple meanings:** Preserves the Chinese definitions and parts of speech available in the source dictionary. Long entries can be scrolled, and English definitions can be expanded.
-- **Inflection lookup:** Uses 56,954 inflection-index keys derived from the source dictionary. Exact-word meanings are retained alongside base forms: for example, `found` includes its own meaning as well as `find`, and `leaves` can lead to both `leaf` and `leave`. Simple suffix rules are used as a fallback and explicitly labeled as possible base forms.
-- **PDF text normalization:** Handles capitalization, some punctuation, soft hyphens, ligatures, and words split across lines with a hyphen.
-- **Optional online lookup:** Only clicking **在线补查** (Look up online) opens Youdao Dictionary in your browser and sends the selected word.
+| Feature | English → Chinese | Russian → Chinese |
+| --- | --- | --- |
+| Headwords with Chinese definitions | 399,213 | 17,383 |
+| Source | [ECDICT](https://github.com/skywind3000/ECDICT) | [Chinese Wiktionary, extracted by Kaikki/Wiktextract](https://kaikki.org/zhwiktionary/%E4%BF%84%E8%AA%9E/index.html) |
+| Form-index keys | 56,954 | 71,489, including recorded inflections and omitted-ё spellings |
+| Loading | Asynchronous preload of 8,000 common words; other shards on demand | Small shards on demand; no bulk Russian preload on first lookup |
+| Additional information | Expandable source English definitions | Original Chinese senses, parts of speech, usage labels, available IPA; some Chinese text is traditional |
 
-## Performance and compatibility
+- **Local lookup and caching:** 256 shards per language, with up to 2,048 cached results and 24 cached shards per language. Concurrent reads are shared. English-only use never reads Russian data.
+- **Multiple meanings:** Preserves available source meanings and scrolls long entries. Russian `мир` includes peace and world; `учёный` includes adjective and noun senses.
+- **Inflections:** English retains exact meanings alongside base forms, such as `found` / `find` and `leaves` / `leaf` / `leave`. Suffix guesses are explicitly marked as possible base forms. Russian uses only source-recorded relationships, such as `исследования` → `исследование`, `методы` → `метод`, and `идёт` → `идти`.
+- **PDF normalization:** Handles case, some punctuation, soft hyphens, ligatures, and line breaks. Russian accepts stress marks such as `НАУ́КА`, preserves `ё` and `й`, and indexes omitted dots in recorded `ё` words. Mixed Latin/Cyrillic selections are rejected to avoid misleading matches.
+- **Optional online lookup:** Only an explicit click on the online or source button opens a browser. English opens Youdao; Russian opens Chinese Wiktionary. Automatic lookup does not send words, PDF files, or surrounding text.
 
-The same lookup engine was benchmarked on October 14, 2026, using Node.js 24 on Windows with a Ryzen 9 8945HS. The sample included 20 common and academic words.
+Russian glosses come directly from Chinese entries, without English-pivot or AI translation. Coverage is limited: some common words, technical terms, and inflections are absent. QuickLex does not choose senses from context, translate sentences/general multiword phrases, or provide OCR for scanned PDFs.
+
+## Performance and validation
+
+Version 0.2.0 was measured on Windows with Node.js 24 and a Ryzen 9 8945HS, using 20 English words and 10 Russian words:
 
 | Scenario | Median | P95 |
 | --- | ---: | ---: |
-| Empty plugin cache; read and parse dictionary shards | 2.338 ms | 5.115 ms |
-| First mixed queries after common-word preload | 0.098 ms | 2.688 ms |
-| Cached results; 1,000 repeated queries | 0.002 ms | 0.004 ms |
+| English, empty plugin cache | 3.003 ms | 5.492 ms |
+| English, first mixed queries after preload | 0.105 ms | 2.449 ms |
+| Russian, empty plugin cache | 2.385 ms | 3.320 ms |
+| English, cached results, 1,000 queries | 0.002 ms | 0.005 ms |
+| Russian, cached results, 1,000 queries | 0.003 ms | 0.005 ms |
 
-Preloading took 23.044 ms. The original benchmark is available in [docs/benchmark.json](docs/benchmark.json). Run `node scripts/benchmark.cjs` to produce a new local report at `artifacts/benchmark.json`.
+See the [0.2.0 benchmark](docs/benchmark-0.2.0.json). **These figures measure Node.js file access and lookup only; OS disk caches may be warm. They exclude XPI decompression, Zotero's popup delay, DOM rendering, and painting, and are not a comparison with another plugin.** The card timer starts at the plugin's selection callback, not at the user's double-click.
 
-**These figures measure only file access and lookup logic in Node.js. The operating system's disk cache may already have been warm. They exclude XPI decompression, Zotero's native selection-popup delay, DOM rendering, and screen painting. No measured comparison with another translation plugin has been made.** The time shown in a QuickLex popup starts when the plugin receives the selection event and ends when definitions are filled in; it is not the complete time from a double-click to visible text.
+All 25 JavaScript tests and one Python extraction test pass. The new XPI was loaded in Windows Zotero 10.0.6 with an isolated profile and empty library, verifying activation, menus, and real-DOM rendering for English, Russian, an inflected word, and an omitted-ё spelling.
 
-Development used the [Zotero 10 developer documentation](https://www.zotero.org/support/dev/zotero_10_for_developers) and the installed 10.0.6 interface source. Version 0.1.1 was loaded in a real Zotero 10.0.6 client using an isolated profile and an empty library. Package parsing, activation, menu registration, and local lookup were verified: the install error was `0`, `isCompatible=true`, `active=true`, and `appDisabled=false`. Looking up `novel` returned its noun and adjective meanings. All 19 automated tests passed.
-
-The screenshot shows an actual reader popup for `augmentation`. Systematic testing across operating systems and a wider range of PDFs is still pending. See [docs/validation.md](docs/validation.md) for the earlier validation record, in Chinese. Appearance and timing may vary between clients.
-
-QuickLex is a single-word dictionary lookup tool. Coverage, accuracy, and completeness depend on ECDICT, including its specialized and potentially dated definitions. It does not choose meanings based on the surrounding paper, translate full sentences or general multiword phrases, or perform OCR on scanned PDFs. The source data is not a complete authoritative dictionary.
+[GitHub Actions](https://github.com/vbcnft59/zotero-quicklex/actions) builds and tests on Windows, macOS Apple Silicon, macOS Intel, and Linux. Both macOS jobs also load the XPI in official Zotero 10.0.6 and check menus and the registered selection callback. Run status and native-client reports are available in the workflow and its artifacts. **Programmatically triggering this callback does not replace full testing of physical double-clicks in PDFs, different reader windows, or other plugins.** See [0.2.0 validation details](docs/validation-0.2.0.md), in Chinese; the [0.1.1 record](docs/validation.md) remains available.
 
 ## Development
 
-Requires Python 3.10+ and Node.js 18+. No npm dependencies are needed.
+Requires Python 3.10+ and Node.js 18+, with no npm dependencies. Use `python` on Windows, or typically `python3` on macOS/Linux:
 
 ```sh
-python scripts/download_sources.py
-python scripts/build_dictionary.py
-node --test tests/core.test.cjs tests/runtime.test.cjs tests/manifest.test.cjs
+python3 scripts/download_sources.py
+python3 scripts/build_dictionary.py
+npm test
+python3 -m unittest discover -s tests -p "test_*.py"
 node scripts/benchmark.cjs
-python scripts/package.py
+python3 scripts/package.py
 ```
 
-The first command downloads the public dictionary and its license and requires an internet connection. The remaining steps can run offline. The source revision and SHA-256 checksum are pinned in the scripts; dictionary compilation stops if the checksum does not match. Packaging produces `dist/quicklex-0.1.1.xpi` and its checksum file.
+The first step downloads pinned sources and needs network access; later steps work offline. Both datasets have SHA-256 checks. Output is `dist/quicklex-0.2.0.xpi` and its checksum. Generated shards are not committed; release XPIs include both dictionaries. A checksum-pinned gzip snapshot of the Russian input is also redistributed so builds remain reproducible after upstream updates. See [source metadata](docs/russian-source.json).
 
-The repository does not include generated dictionary shards. The build scripts compile them from the pinned ECDICT revision, and the XPI on the release page already includes them. Users of a source archive need to run the build steps above. Optionally, `python scripts/download_sources.py --references-only` downloads official interface source for development; this is not required for a build.
-
-To preview the card in a browser:
+Native checks create a separate workspace profile and empty library, without using your personal profile. For example, on macOS:
 
 ```sh
-python -m http.server 8765 --bind 127.0.0.1
+python3 scripts/native_smoke.py --executable /Applications/Zotero.app/Contents/MacOS/zotero
 ```
 
-Open `http://127.0.0.1:8765/demo/`. The preview shares `core.js`, `card.js`, and the compiled dictionary with the plugin, but is not a substitute for testing inside Zotero. If the port is occupied or reserved, choose another local port. Press `Ctrl+C` in the terminal to stop the server.
+For the English/Russian browser preview, run `python3 -m http.server 8765 --bind 127.0.0.1` and open `http://127.0.0.1:8765/demo/`. Choose another port if needed; press `Ctrl+C` to stop. The preview shares plugin code and dictionaries but does not replace Zotero testing.
 
-Source layout: `addon/` contains the plugin, `scripts/` contains download/build/benchmark/packaging tools, and `tests/` covers selection normalization, real dictionary entries, inflections, caching, retry behavior, rapid selection changes, and lifecycle cleanup.
+`addon/` contains plugin code; `scripts/` contains download, conversion, benchmark, native-check, and packaging tools. `tests/` covers definitions, inflections, caching, retries, lifecycle, and attribution. Optional `download_sources.py --references-only` downloads official API reference source.
 
 ## License
 
-The plugin is licensed under MIT. ECDICT's MIT license and attribution are included in the installation package. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Plugin code and ECDICT use MIT. The Russian–Chinese dictionary and transformed data are separately distributed under **CC BY-SA 4.0**, attributed to Chinese Wiktionary contributors, with original page links and full license text. Conversion code is public and Chinese source text is preserved. See [LICENSE](LICENSE), [third-party notices](THIRD_PARTY_NOTICES.md), and [CC BY-SA 4.0](docs/licenses/CC-BY-SA-4.0.txt).

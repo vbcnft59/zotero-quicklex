@@ -4,12 +4,13 @@ var QuickLexRuntime = (() => {
     let active = false;
     const windows = new Map();
     const cards = new Set();
-    const engine = new QuickLexCore.Dictionary({
+    const engine = new QuickLexCore.MultilingualDictionary({
       // Zotero's resource reader handles jar: URLs containing '@' in installed plugin filenames.
       loadJSON: async path => JSON.parse(await Zotero.File.getResourceAsync(rootURI + "data/" + path)),
     });
     const enabled = () => Services.prefs.getBoolPref("extensions.quicklex.enabled", true);
-    const online = word => Zotero.launchURL("https://dict.youdao.com/result?word=" + encodeURIComponent(word) + "&lang=en");
+    const online = word => Zotero.launchURL(QuickLexCore.onlineURL(word));
+    const source = url => Zotero.launchURL(url);
     const logError = error => Zotero.logError(error);
     const now = () => Date.now();
 
@@ -26,7 +27,7 @@ var QuickLexRuntime = (() => {
         const query = QuickLexCore.normalizeSelection(params?.annotation?.text);
         if (!query) return;
         let started = now();
-        const view = QuickLexCard.create(doc, query, { onOnline: online });
+        const view = QuickLexCard.create(doc, query, { onOnline: online, onSource: source });
         for (const ref of cards) {
           const card = ref.deref();
           if (!card || !card.isConnected) cards.delete(ref);
@@ -55,10 +56,10 @@ var QuickLexRuntime = (() => {
 
     async function manualLookup(win) {
       const input = { value: "" };
-      if (!Services.prompt.prompt(win, "QuickLex 英汉速查", "输入一个英文单词：", input, null, {})) return;
+      if (!Services.prompt.prompt(win, "QuickLex 英汉 / 俄汉速查", "输入一个英文或俄文单词：", input, null, {})) return;
       const query = QuickLexCore.normalizeSelection(input.value);
       if (!query) {
-        Services.prompt.alert(win, "QuickLex", "请输入一个英文单词；支持连字符和词形变化。");
+        Services.prompt.alert(win, "QuickLex", "请输入一个英文或俄文单词；支持连字符和词库收录的词形变化。");
         return;
       }
       try {
@@ -67,7 +68,8 @@ var QuickLexRuntime = (() => {
         if (!active || win.closed) return;
         const definitions = result.entries.map(entry => `${entry.word}${entry.phonetic ? " /" + entry.phonetic + "/" : ""}\n${entry.translation}`).join("\n\n");
         Services.prompt.alert(win, "QuickLex · " + query,
-          (definitions || "本地词典暂未收录这个词。") + `\n\n本地查询 ${now() - started} ms`);
+          (definitions || "本地词典暂未收录这个词。") + `\n\n${result.source} · 本地查询 ${now() - started} ms`
+          + (result.language === "ru" ? "\n中文维基词典贡献者 · CC BY-SA 4.0\n来源：https://zh.wiktionary.org/wiki/" + encodeURIComponent(result.entries[0]?.word || query) : ""));
       }
       catch (error) {
         logError(error);
@@ -101,7 +103,7 @@ var QuickLexRuntime = (() => {
       about.setAttribute("label", "使用说明…");
       about.addEventListener("command", () => {
         Services.prompt.alert(win, `QuickLex ${version}`,
-          "在 Zotero 内置阅读器中双击英文单词，释义会显示在选词弹窗中。\n\n释义来自随插件安装的 ECDICT 本地词典，无需 API Key，查词无需联网。\n支持音标、多义项、词形还原及可展开的英文释义。\n\n点击“在线补查”才会在浏览器打开有道词典。\n若旧翻译插件也自动弹窗，可关闭旧插件的自动查词。\n\n弹窗耗时仅统计本插件处理，不包含 Zotero 原生弹窗及屏幕绘制。\n当前版本面向 Zotero 10.0；专业术语和语境释义受词库覆盖限制。");
+          "在 Zotero 内置阅读器中双击英文或俄文单词，自动识别语言并显示中文释义。Windows 与 macOS 使用同一 XPI，无需 API Key，查词无需联网。\n\n英文来自 ECDICT；俄汉来自中文维基词典贡献者，经 Kaikki/Wiktextract 提取，以 CC BY-SA 4.0 分发。保留中文原文，部分为繁体。支持音标、多义项及词库收录的词形变化。\n\n只有点击“在线补查”或词条来源才打开浏览器。英文补查打开有道，俄文打开中文维基词典。\n若旧翻译插件也自动弹窗，可关闭旧插件的自动查词。\n\n弹窗耗时仅统计本插件处理，不包含 Zotero 原生弹窗及屏幕绘制。\n当前版本面向 Zotero 10.0；专业术语和语境释义受词库覆盖限制。");
       });
       popup.append(toggle, lookup, about);
       menu.append(popup);

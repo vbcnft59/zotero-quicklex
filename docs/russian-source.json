@@ -1,0 +1,17 @@
+{
+  "edition": "zhwiktionary",
+  "language": "ru",
+  "dumpDate": "2026-10-01",
+  "extractedAt": "2026-10-02",
+  "extractorRevision": "1a05e46",
+  "postprocessorRevision": "e3d6d4e",
+  "upstream": "https://kaikki.org/zhwiktionary/%E4%BF%84%E8%AA%9E/kaikki.org-dictionary-%E4%BF%84%E8%AA%9E.jsonl",
+  "sourceSha256": "4fbef5d5c41566662a19faefbfeb2d7a13c14b7a5909ea1eb20126d62138a776",
+  "snapshotURL": "https://github.com/vbcnft59/zotero-quicklex/releases/download/v0.2.0/ru-zh-wiktionary-20261001.jsonl.gz",
+  "snapshotSha256": "a3fcaa5354708cf50603d58cbcfdca92d8b3b683600391277241cd5dcf41fae5",
+  "license": "CC-BY-SA-4.0",
+  "licenseURL": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "attribution": "Chinese Wiktionary contributors; extracted by Kaikki.org / Wiktextract",
+  "pageURLTemplate": "https://zh.wiktionary.org/wiki/{sourcePage}",
+  "modifications": "QuickLex preserves the upstream snapshot byte-for-byte, compressed with gzip. Generated dictionary adaptations are also CC BY-SA 4.0."
+}

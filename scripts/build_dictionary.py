@@ -27,7 +27,7 @@ def shard_for(word):
 
 def write_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n")
 
 
 def text(value):
@@ -95,6 +95,8 @@ def main():
     shutil.copyfile(CACHE / "ecdict-LICENSE", OUTPUT / "LICENSE-ECDICT.txt")
     print(json.dumps({key: metadata[key] for key in ["entries", "formKeys", "hotEntries", "revision"]}, indent=2))
     print(f"Dictionary: {sum(path.stat().st_size for path in OUTPUT.rglob('*') if path.is_file()) / 1024**2:.1f} MiB uncompressed")
+    from build_russian import main as build_russian
+    build_russian()
 
 
 if __name__ == "__main__":

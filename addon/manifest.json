@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "QuickLex 速查",
-  "version": "0.1.1",
-  "description": "双击英文单词，即时查询本地英汉词典；支持多释义和词形还原。",
+  "version": "0.2.0",
+  "description": "Windows / macOS 通用：双击英文或俄文单词，离线显示中文释义；支持多释义和词库词形还原。",
   "author": "QuickLex contributors",
   "applications": {
     "zotero": {
