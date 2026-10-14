@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickLex · 查词卡片预览</title>
+<style>
+  :root { color-scheme:light; --ink:#242f36; --muted:#6d7a80; --page:#f4f5f2; --panel:#fff; --line:#dfe4df; --green:#1e725b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.65 system-ui,'Microsoft YaHei',sans-serif; }
+  header { padding:22px 6vw; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .brand { display:flex; gap:12px; align-items:center; }
+  .mark { display:grid; place-items:center; color:#fff; background:var(--green); width:36px; height:36px; border-radius:10px; font:600 21px Georgia,serif; }
+  .brand strong { font-size:16px; font-weight:650; }
+  .brand small { color:var(--muted); margin-left:10px; }
+  .dev { color:var(--muted); font-size:12px; }
+  main { width:min(1090px,90vw); margin:44px auto; }
+  h1 { font-size:30px; letter-spacing:-.5px; font-weight:650; margin:0 0 8px; }
+  .intro { color:var(--muted); margin:0 0 32px; }
+  .workspace { display:grid; grid-template-columns:minmax(0,1fr) 365px; gap:32px; align-items:start; }
+  .paper { background:var(--panel); border:1px solid var(--line); padding:40px; border-radius:10px; min-height:435px; }
+  .kicker { color:var(--green); font-size:11px; font-weight:600; letter-spacing:1.7px; }
+  .paper h2 { font:500 26px/1.35 Georgia,serif; margin:18px 0; }
+  .paper p { font:17px/1.9 Georgia,'Times New Roman',serif; }
+  .paper .byline { color:var(--muted); font:12px system-ui,sans-serif; margin:0 0 26px; }
+  .term { color:inherit; font:inherit; border:0; border-bottom:2px solid #c7ded3; padding:0 2px; background:#eaf4ee; cursor:pointer; border-radius:3px; }
+  .term:hover { background:#d7ecdf; }
+  .paper .hint { font:12px/1.7 system-ui,sans-serif; color:var(--muted); margin-top:30px; border-top:1px solid var(--line); padding-top:16px; }
+  .label { color:var(--muted); font-size:12px; margin-bottom:9px; }
+  form { display:flex; gap:8px; margin-bottom:14px; }
+  input { min-width:0; flex:1; color:var(--ink); font:15px system-ui,sans-serif; border:1px solid #cdd6ce; background:var(--panel); border-radius:7px; padding:10px 12px; }
+  input:focus { outline:2px solid #b3d6c7; outline-offset:1px; }
+  .search { color:#fff; border:0; background:var(--green); border-radius:7px; padding:9px 16px; font:14px system-ui,sans-serif; cursor:pointer; }
+  .native { margin-top:18px; width:fit-content; background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 32px #142b2312; overflow:hidden; }
+  .swatches { display:flex; align-items:center; gap:14px; padding:11px 14px; border-bottom:1px solid var(--line); }
+  .swatch { width:14px; height:14px; border-radius:50%; }
+  #card { --material-background:#fff; --fill-primary:#20252e; }
+  .note { margin-top:15px; color:var(--muted); font-size:11px; line-height:1.8; }
+  .stats { display:flex; gap:32px; color:var(--muted); font-size:12px; border-top:1px solid var(--line); margin-top:30px; padding-top:20px; }
+  .stats b { color:var(--ink); font-weight:600; }
+  @media(max-width:780px) { .workspace { grid-template-columns:1fr; } main { margin-top:28px; } .paper { padding:25px; min-height:0; } aside { max-width:100%; } .native { max-width:100%; } .brand small { display:none; } .stats { gap:15px; flex-wrap:wrap; } }
+  @media(prefers-color-scheme:dark) { :root { color-scheme:dark; --ink:#e0e7e2; --muted:#a5b1a9; --page:#1c211e; --panel:#252d28; --line:#3a463d; --green:#69b59a; } .mark,.search { background:#39785f; } .term { background:#344f3f; border-color:#54846a; } #card { --material-background:#252d28; --fill-primary:#e0e7e2; } }
+</style>
+<header>
+  <div class="brand"><span class="mark">Q</span><strong>QuickLex 速查</strong><small>专注读懂眼前这个词</small></div>
+  <span class="dev">开发预览 · 与插件共用查词引擎</span>
+</header>
+<main>
+  <h1>阅读继续，少一点等待。</h1>
+  <p class="intro">随插件安装的英汉词典，直接在本地查询。这里可以试查释义和词形。</p>
+  <div class="workspace">
+    <article class="paper">
+      <div class="kicker">READING EXAMPLE</div>
+      <h2>Understanding variation<br>in scientific research</h2>
+      <p class="byline">用于查词测试的示例文本</p>
+      <p>A <button class="term" data-word="novel">novel</button> approach can reveal patterns that conventional methods overlook. However, <button class="term" data-word="heterogeneity">heterogeneity</button> across samples may affect the interpretation of the results.</p>
+      <p>Repeated <button class="term" data-word="analyses">analyses</button> help researchers evaluate the evidence. The <button class="term" data-word="binding">binding</button> process provides another example of why a single translation may be insufficient.</p>
+      <p class="hint">点击浅绿色单词，或在右侧输入一个英文词。安装插件后，在 Zotero 内置阅读器中双击单词即可查词。</p>
+    </article>
+    <aside>
+      <div class="label">试查一个单词</div>
+      <form id="lookup"><input id="word" aria-label="英文单词" value="novel" autocomplete="off" spellcheck="false"><button class="search">查词</button></form>
+      <div class="native">
+        <div class="swatches" aria-label="模拟 Zotero 标注工具条"><span class="swatch" style="background:#f1cb48"></span><span class="swatch" style="background:#eb8886"></span><span class="swatch" style="background:#8cb6e8"></span><span class="swatch" style="background:#83c6a2"></span><span class="swatch" style="background:#b99de0"></span></div>
+        <div id="card"></div>
+      </div>
+      <p class="note" id="status">正在准备本地词典…</p>
+    </aside>
+  </div>
+  <div class="stats"><span><b>399,213</b> 个词条</span><span><b>8,000</b> 个常用词预加载</span><span>自动查词 <b>零网络请求</b></span></div>
+</main>
+<script src="../addon/core.js"></script>
+<script src="../addon/card.js"></script>
+<script>
+  const dictionary = new QuickLexCore.Dictionary({ loadJSON: async path => {
+    const response = await fetch('../build/dictionary/' + path);
+    if (!response.ok) throw Error('Dictionary read failed: ' + response.status);
+    return response.json();
+  } });
+  let selectionVersion = 0;
+  async function lookup(input) {
+    const version = ++selectionVersion;
+    const query = QuickLexCore.normalizeSelection(input);
+    const holder = document.querySelector('#card');
+    if (!query) { document.querySelector('#status').textContent = '请输入一个英文单词，支持连字符和词形变化。'; return; }
+    document.querySelector('#word').value = query;
+    const start = performance.now();
+    const view = QuickLexCard.create(document, query, { onOnline: word => window.open('https://dict.youdao.com/result?word=' + encodeURIComponent(word) + '&lang=en', '_blank', 'noopener') });
+    holder.replaceChildren(view.root);
+    const run = async () => {
+      try {
+        const result = dictionary.peek(query) || await dictionary.lookup(query);
+        if (version !== selectionVersion) return;
+        view.render(result, performance.now() - start);
+        document.querySelector('#status').textContent = '此卡片与插件使用相同代码。耗时仅代表本地查询，实际 Zotero 弹窗还受阅读器渲染影响。';
+      } catch (error) { console.error(error); view.error(run); }
+    };
+    await run();
+  }
+  document.querySelector('#lookup').addEventListener('submit', event => { event.preventDefault(); void lookup(document.querySelector('#word').value); });
+  for (const button of document.querySelectorAll('[data-word]')) button.addEventListener('click', () => { void lookup(button.dataset.word); });
+  dictionary.warm().then(() => lookup('novel'));
+</script>
+</html>

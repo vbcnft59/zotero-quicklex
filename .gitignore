@@ -1,0 +1,14 @@
+.cache/
+__pycache__/
+node_modules/
+dist/
+build/
+artifacts/
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+*.log
+*.xpi
+*.xpi.sha256

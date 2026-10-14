@@ -1,0 +1,30 @@
+{
+  "measuredAt": "2026-10-14T08:14:34.238Z",
+  "environment": {
+    "node": "v24.18.1",
+    "platform": "win32",
+    "cpu": "AMD Ryzen 9 8945HS w/ Radeon 780M Graphics"
+  },
+  "entries": 399213,
+  "preloadMs": 23.044,
+  "emptyPluginCache": {
+    "n": 20,
+    "medianMs": 2.338,
+    "p95Ms": 5.115,
+    "maxMs": 5.115
+  },
+  "firstLookupAfterPreload": {
+    "n": 20,
+    "medianMs": 0.098,
+    "p95Ms": 2.688,
+    "maxMs": 2.688
+  },
+  "cached": {
+    "n": 1000,
+    "medianMs": 0.002,
+    "p95Ms": 0.004,
+    "maxMs": 0.034
+  },
+  "fileReads": 38,
+  "limits": "Node.js filesystem + JSON parsing only, OS disk cache may be warm; excludes XPI decompression, Zotero native popup delay, DOM rendering, and display. No comparison with the user’s existing plugin has been measured."
+}
