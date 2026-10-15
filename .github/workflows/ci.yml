@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: [main]
+    branches: [main, russian]
   pull_request:
   workflow_dispatch:
 
@@ -27,12 +27,12 @@ jobs:
         run: python scripts/download_sources.py
       - name: Compile dictionaries
         run: python scripts/build_dictionary.py
-      - name: Test Russian data extraction
-        run: python -m unittest discover -s tests -p "test_*.py"
       - name: Test lookup engine and plugin lifecycle
         run: npm test
       - name: Build universal XPI
         run: python scripts/package.py
+      - name: Verify English-only package contents
+        run: python -m unittest discover -s tests -p "test_*.py"
       - name: Load release XPI in Zotero 10.0.6 on macOS
         if: runner.os == 'macOS'
         shell: bash

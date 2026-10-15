@@ -20,7 +20,7 @@ class Element {
   find(predicate) { return this.children.flatMap(child => [ ...(predicate(child) ? [child] : []), ...child.find(predicate) ]); }
 }
 
-async function harness(loader, { rootURI = 'jar:file:///extensions/quicklex@translatezotero.local.xpi!/', isMac = false } = {}) {
+async function harness(loader, { rootURI = 'jar:file:///extensions/quicklex@translatezotero.local.xpi!/' } = {}) {
   const document = {
     createElementNS(ns, tag) { return new Element(this, tag); },
     createXULElement(tag) { return new Element(this, tag); },
@@ -31,7 +31,6 @@ async function harness(loader, { rootURI = 'jar:file:///extensions/quicklex@tran
   const win = { document, closed: false };
   const listeners = new Map(), prefs = new Map(), launched = [], errors = [];
   const Zotero = {
-    isMac,
     initializationPromise: Promise.resolve(),
     Reader: { registerEventListener(type, fn) { listeners.set(type, fn); }, unregisterEventListener(type, fn) { assert.equal(listeners.get(type), fn); listeners.delete(type); } },
     getMainWindows: () => [win],
@@ -42,8 +41,7 @@ async function harness(loader, { rootURI = 'jar:file:///extensions/quicklex@tran
     launchURL: url => launched.push(url), logError: error => errors.push(error),
   };
   const Services = {
-    prefs: { getBoolPref: (key, fallback) => prefs.get(key) ?? fallback, setBoolPref: (key, value) => prefs.set(key, value),
-      getStringPref: (key, fallback) => prefs.get(key) ?? fallback, setStringPref: (key, value) => prefs.set(key, value) },
+    prefs: { getBoolPref: (key, fallback) => prefs.get(key) ?? fallback, setBoolPref: (key, value) => prefs.set(key, value) },
     prompt: { alert() {}, prompt() { return false; } },
     scriptloader: { loadSubScript(uri, scope) {
       const name = uri.slice(rootURI.length);
@@ -58,7 +56,7 @@ async function harness(loader, { rootURI = 'jar:file:///extensions/quicklex@tran
   } };
   const scope = vm.createContext({ Zotero, Services, ChromeUtils });
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../addon/bootstrap.js'), 'utf8'), scope);
-  await scope.startup({ id: 'quicklex@test', version: '0.2.0', rootURI });
+  await scope.startup({ id: 'quicklex@test', version: '0.3.1', rootURI });
   function select(text) {
     let card;
     listeners.get('renderTextSelectionPopup')?.({ doc: document, params: { annotation: { text } }, append(element) { card = element; document.body.append(element); } });
@@ -140,45 +138,32 @@ test('read error displays a retry action and successful retry updates the card',
   app.scope.shutdown();
 });
 
-test('Russian reader cards show Chinese senses and source links; online lookup is explicit', async () => {
+
+test('regular edition ignores Russian selections and exposes only English lookup controls', async () => {
   const reads = [];
-  const app = await harness(async file => {
-    reads.push(file);
-    return file.startsWith('ru/')
-      ? { entries: { наука: ['наука', 'nɐˈukə', '科學；課程', '', 'наука'] }, forms: {} }
-      : { entries: {}, forms: {} };
-  });
+  const app = await harness(async file => { reads.push(file); return { entries: {}, forms: {} }; });
   await tick();
+  assert.equal(app.select('наука'), undefined);
+  assert.equal(app.select('статистические'), undefined);
   assert.deepEqual(reads, ['hot.json']);
-  const card = app.select('«НАУ́КА»');
-  await tick();
-  assert.ok(card.textContent.includes('科學；課程'));
-  assert.ok(card.textContent.includes('БРуКС'));
-  assert.ok(!card.textContent.includes('维基词典'));
-  assert.equal(card.getAttribute('aria-label'), 'QuickLex 俄汉速查');
-  assert.equal(card.find(node => node.tagName === 'summary').length, 0);
-  assert.equal(app.launched.length, 0);
-  card.find(node => node.textContent === '在线补查 ↗')[0].fire('click');
-  assert.equal(app.launched[0], 'https://bkrs.info/slovo.php?ch=' + encodeURIComponent('наука'));
-  card.find(node => node.textContent === 'БРуКС / BKRS.info ↗')[0].fire('click');
-  assert.equal(app.launched[1], 'https://bkrs.info/slovo.php?ch=' + encodeURIComponent('наука'));
+  const labels = app.document.body.find(node => node.tagName === 'menuitem').map(node => node.getAttribute('label'));
+  assert.deepEqual(labels, ['选中单词后自动显示释义', '查一个单词…', '使用说明…']);
   app.scope.shutdown();
 });
 
-test('macOS-style installed paths with spaces/Unicode load data, register menus, and support manual Russian lookup', async () => {
-  const data = { entries: { наука: ['наука', '', '科學', '', 'наука'] }, forms: {} };
+test('macOS Unicode/space profile paths load English data and manual lookup', async () => {
+  const data = { entries: { novel: ['novel', '', '小说；新奇的', ''] }, forms: {} };
   const app = await harness(async () => data, {
-    isMac: true,
     rootURI: 'jar:file:///Users/reader/Library/Application%20Support/Zotero/Profiles/%E6%B5%8B%E8%AF%95/extensions/quicklex@translatezotero.local.xpi!/',
   });
   await tick();
+  assert.ok(app.select('novel').textContent.includes('小说'));
   const alerts = [];
-  app.Services.prompt.prompt = (win, title, text, input) => { input.value = 'НАУ́КА'; return true; };
+  app.Services.prompt.prompt = (win, title, text, input) => { input.value = 'Novel'; return true; };
   app.Services.prompt.alert = (win, title, text) => alerts.push(text);
   app.document.body.find(node => node.getAttribute('label') === '查一个单词…')[0].fire('command');
   await tick();
-  assert.ok(alerts[0].includes('科學'));
-  assert.ok(alerts[0].includes('BKRS 自由使用声明'));
+  assert.ok(alerts[0].includes('小说'));
   app.scope.shutdown();
   assert.equal(app.document.getElementById('quicklex-tools-menu'), undefined);
   assert.equal(app.errors.length, 0);

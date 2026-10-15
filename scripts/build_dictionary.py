@@ -95,9 +95,9 @@ def main():
     write_json(OUTPUT / "metadata.json", metadata)
     shutil.copyfile(CACHE / "ecdict-LICENSE", OUTPUT / "LICENSE-ECDICT.txt")
     print(json.dumps({key: metadata[key] for key in ["entries", "formKeys", "hotEntries", "revision"]}, indent=2))
-    print(f"Dictionary: {sum(path.stat().st_size for path in OUTPUT.rglob('*') if path.is_file()) / 1024**2:.1f} MiB uncompressed")
-    from build_russian import main as build_russian
-    build_russian()
+    files = [OUTPUT / name for name in ("metadata.json", "hot.json", "LICENSE-ECDICT.txt")]
+    files.extend(OUTPUT / "shards" / f"{number:02x}.json" for number in range(256))
+    print(f"English dictionary: {sum(path.stat().st_size for path in files) / 1024**2:.1f} MiB uncompressed")
 
 
 if __name__ == "__main__":

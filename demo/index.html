@@ -46,7 +46,7 @@
 </header>
 <main>
   <h1>阅读继续，少一点等待。</h1>
-  <p class="intro">随插件安装的英汉 / 俄汉词典，自动识别语言，直接在本地查询。</p>
+  <p class="intro">随插件安装的英汉词典，直接在本地查询。这里可以试查释义和词形。</p>
   <div class="workspace">
     <article class="paper">
       <div class="kicker">READING EXAMPLE</div>
@@ -54,12 +54,11 @@
       <p class="byline">用于查词测试的示例文本</p>
       <p>A <button class="term" data-word="novel">novel</button> approach can reveal patterns that conventional methods overlook. However, <button class="term" data-word="heterogeneity">heterogeneity</button> across samples may affect the interpretation of the results.</p>
       <p>Repeated <button class="term" data-word="analyses">analyses</button> help researchers evaluate the evidence. The <button class="term" data-word="binding">binding</button> process provides another example of why a single translation may be insufficient.</p>
-      <p lang="ru">Научные <button class="term" data-word="исследования">исследования</button> помогают понять <button class="term" data-word="мир">мир</button>. <button class="term" data-word="наука">Наука</button> предлагает новые <button class="term" data-word="методы">методы</button>. <button class="term" data-word="статистические">Статистические</button> данные помогают сравнивать результаты.</p>
-      <p class="hint">点击浅绿色单词，或在右侧输入一个英文、俄文词。Windows 与 macOS 安装同一个 XPI，在 Zotero 内置阅读器中双击单词即可查词。</p>
+      <p class="hint">点击浅绿色单词，或在右侧输入一个英文词。安装插件后，在 Zotero 内置阅读器中双击单词即可查词。</p>
     </article>
     <aside>
       <div class="label">试查一个单词</div>
-      <form id="lookup"><input id="word" aria-label="英文或俄文单词" value="novel" autocomplete="off" spellcheck="false"><button class="search">查词</button></form>
+      <form id="lookup"><input id="word" aria-label="英文单词" value="novel" autocomplete="off" spellcheck="false"><button class="search">查词</button></form>
       <div class="native">
         <div class="swatches" aria-label="模拟 Zotero 标注工具条"><span class="swatch" style="background:#f1cb48"></span><span class="swatch" style="background:#eb8886"></span><span class="swatch" style="background:#8cb6e8"></span><span class="swatch" style="background:#83c6a2"></span><span class="swatch" style="background:#b99de0"></span></div>
         <div id="card"></div>
@@ -67,12 +66,12 @@
       <p class="note" id="status">正在准备本地词典…</p>
     </aside>
   </div>
-  <div class="stats"><span><b>399,213</b> 个英汉词条</span><span><b>122,937</b> 个俄汉词条</span><span>自动查词 <b>零网络请求</b></span></div>
+  <div class="stats"><span><b>399,213</b> 个词条</span><span><b>8,000</b> 个常用词预加载</span><span>自动查词 <b>零网络请求</b></span></div>
 </main>
 <script src="../addon/core.js"></script>
 <script src="../addon/card.js"></script>
 <script>
-  const dictionary = new QuickLexCore.MultilingualDictionary({ loadJSON: async path => {
+  const dictionary = new QuickLexCore.Dictionary({ loadJSON: async path => {
     const response = await fetch('../build/dictionary/' + path);
     if (!response.ok) throw Error('Dictionary read failed: ' + response.status);
     return response.json();
@@ -82,11 +81,10 @@
     const version = ++selectionVersion;
     const query = QuickLexCore.normalizeSelection(input);
     const holder = document.querySelector('#card');
-    if (!query) { document.querySelector('#status').textContent = '请输入一个英文或俄文单词，支持连字符和词库收录的词形变化。'; return; }
+    if (!query) { document.querySelector('#status').textContent = '请输入一个英文单词，支持连字符和词形变化。'; return; }
     document.querySelector('#word').value = query;
     const start = performance.now();
-    const open = url => window.open(url, '_blank', 'noopener');
-    const view = QuickLexCard.create(document, query, { onOnline: word => open(QuickLexCore.onlineURL(word)), onSource: open });
+    const view = QuickLexCard.create(document, query, { onOnline: word => window.open('https://dict.youdao.com/result?word=' + encodeURIComponent(word) + '&lang=en', '_blank', 'noopener') });
     holder.replaceChildren(view.root);
     const run = async () => {
       try {

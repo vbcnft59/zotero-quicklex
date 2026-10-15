@@ -1,11 +1,9 @@
 """Download public dictionary data and API references; never touches Zotero profiles."""
 import hashlib
 import argparse
-import gzip
 import json
 import shutil
 import urllib.request
-import urllib.error
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,34 +27,6 @@ def fetch(url, target, expected=None):
     return digest
 
 
-def russian_source():
-    lock = json.loads((ROOT / "docs/russian-source.json").read_text(encoding="utf-8"))
-    russian_dictionary(lock)
-    morphology = json.loads((ROOT / "docs/russian-morphology-source.json").read_text(encoding="utf-8"))
-    for key in ("dataPackage", "readerPackage"):
-        spec = morphology[key]
-        fetch(spec["url"], CACHE / spec["file"], spec["sha256"])
-
-
-def russian_dictionary(spec):
-    target = CACHE / spec["file"]
-    if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() == spec["sourceSha256"]:
-        print(f"Verified cached Russian source: {target.name}", flush=True)
-        return
-    packed = CACHE / spec["snapshotFile"]
-    try:
-        fetch(spec["snapshotURL"], packed, spec["snapshotSha256"])
-    except (urllib.error.URLError, TimeoutError):
-        # The release mirror may not exist during the first pre-release build.
-        fetch(spec["upstream"], packed, spec["snapshotSha256"])
-    partial = target.with_suffix(".dsl.part")
-    with gzip.open(packed, "rb") as source, partial.open("wb") as output:
-        shutil.copyfileobj(source, output)
-    if hashlib.sha256(partial.read_bytes()).hexdigest() != spec["sourceSha256"]:
-        raise SystemExit("Russian snapshot decompression checksum mismatch")
-    partial.replace(target)
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--references-only", action="store_true")
@@ -74,7 +44,6 @@ def main():
     metadata = {"repository": "https://github.com/skywind3000/ECDICT", "revision": revision, "sha256": files}
     (CACHE / "dictionary-source.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(metadata, indent=2), flush=True)
-    russian_source()
 
 
 if __name__ == "__main__":

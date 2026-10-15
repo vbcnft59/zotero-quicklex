@@ -47,10 +47,9 @@ var QuickLexCard = (() => {
     return element;
   }
 
-  function create(doc, query, { onOnline = () => {}, onSource = () => {} } = {}) {
-    const russian = QuickLexCore.languageFor(query) === "ru";
+  function create(doc, query, { onOnline = () => {} } = {}) {
     const root = node(doc, "section", "quicklex-card");
-    root.setAttribute("aria-label", russian ? "QuickLex 俄汉速查" : "QuickLex 英汉速查");
+    root.setAttribute("aria-label", "QuickLex 英汉速查");
     root.setAttribute("data-quicklex", "true");
     const style = node(doc, "style");
     style.textContent = CSS;
@@ -61,10 +60,10 @@ var QuickLexCard = (() => {
     body.setAttribute("tabindex", "0");
     body.append(node(doc, "div", "ql-status", "正在读取本地词典…"));
     const footer = node(doc, "div", "ql-footer");
-    const timing = node(doc, "span", "ql-time", russian ? "БРуКС · 俄汉" : "ECDICT 本地词典");
+    const timing = node(doc, "span", "ql-time", "ECDICT 本地词典");
     const online = node(doc, "button", "ql-link", "在线补查 ↗");
     online.type = "button";
-    online.title = russian ? "在浏览器打开 BKRS 俄汉词典，仅发送当前单词" : "在浏览器打开有道词典，仅发送当前单词";
+    online.title = "在浏览器打开有道词典，仅发送当前单词";
     online.addEventListener("click", event => { event.preventDefault(); onOnline(query); });
     footer.append(timing, online);
     root.append(style, header, body, footer);
@@ -91,13 +90,6 @@ var QuickLexCard = (() => {
         }
         if (entry.phonetic) section.append(node(doc, "div", "ql-phonetic", "/" + entry.phonetic.replace(/^\/|\/$/g, "") + "/"));
         section.append(node(doc, "div", "ql-translation", entry.translation));
-        if (entry.sourceURL) {
-          const credit = node(doc, "button", "ql-link", result.attribution + " ↗");
-          credit.type = "button";
-          credit.title = "查看原词条；词库依据 BKRS 自由使用声明转换并分片";
-          credit.addEventListener("click", event => { event.preventDefault(); onSource(entry.sourceURL); });
-          section.append(credit);
-        }
         if (entry.definition) {
           const details = node(doc, "details");
           details.append(node(doc, "summary", "", "展开英文释义"), node(doc, "div", "ql-english", entry.definition));
@@ -105,7 +97,7 @@ var QuickLexCard = (() => {
         }
         body.append(section);
       }
-      timing.textContent = `${result.source} · 本地查询 ${Math.max(0, elapsed).toFixed(1)} ms`;
+      timing.textContent = `ECDICT · 本地查询 ${Math.max(0, elapsed).toFixed(1)} ms`;
       timing.title = "从插件收到选词事件到释义填入的耗时，不含 Zotero 原生选词弹窗等待和屏幕绘制。";
     }
 

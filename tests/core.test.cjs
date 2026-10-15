@@ -19,7 +19,8 @@ test('normalizes PDF artifacts, punctuation, ligatures, and case; rejects phrase
     ['“Novel,”', 'novel'], ['hetero-\ngeneity', 'heterogeneity'], ['ﬁnd', 'find'],
     ['BINDING\u00ad', 'binding'], ['student’s', "student's"], ['well‑being', 'well-being'],
     ['(analyses).', 'analyses'], ["'novel'", 'novel'], ['word\u200b', 'word'],
-    ['two words', null], ['123', null], ['中文', null], ['', null], [null, null],
+    ['two words', null], ['123', null], ['中文', null], ['наука', null], ['статистические', null],
+    ['nаuka', null], ['', null], [null, null],
     ['x'.repeat(81), null], ['<script>alert(1)</script>', null],
   ]) assert.equal(normalizeSelection(input), expected, String(input));
 });

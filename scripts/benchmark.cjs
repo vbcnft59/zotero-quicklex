@@ -2,7 +2,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { performance } = require('node:perf_hooks');
-const { MultilingualDictionary } = require('../addon/core.js');
+const { Dictionary } = require('../addon/core.js');
 const root = path.join(__dirname, '..');
 let reads = 0;
 const loadJSON = async file => { reads++; return JSON.parse(await fs.readFile(path.join(root, 'build/dictionary', file), 'utf8')); };
@@ -24,40 +24,23 @@ async function measure(engine, words) {
   const words = ['novel', 'bank', 'set', 'analysis', 'heterogeneity', 'phosphorylation', 'epistemology', 'stoichiometry', 'running', 'children', 'analyses', 'leaves', 'found', 'binding', 'regression', 'endogeneity', 'multicollinearity', 'anisotropy', 'immunohistochemistry', 'polymerase'];
   const coldSamples = [];
   for (const word of words) {
-    const engine = new MultilingualDictionary({ loadJSON });
+    const engine = new Dictionary({ loadJSON });
     const start = performance.now();
     const result = await engine.lookup(word);
     if (!result.entries.length) throw Error('Missing benchmark word: ' + word);
     coldSamples.push(performance.now() - start);
     engine.dispose();
   }
-  const engine = new MultilingualDictionary({ loadJSON });
+  const engine = new Dictionary({ loadJSON });
   const warmStart = performance.now();
   await engine.warm();
   const preloadMs = +(performance.now() - warmStart).toFixed(3);
   const firstMixed = await measure(engine, words);
   const cached = await measure(engine, Array.from({ length: 1000 }, (_, i) => words[i % words.length]));
   const metadata = JSON.parse(await fs.readFile(path.join(root, 'build/dictionary/metadata.json'), 'utf8'));
-  const ruWords = ['наука', 'мир', 'исследование', 'исследования', 'метод', 'методы', 'учёный', 'ученый', 'идёт', 'данные',
-    'статистические', 'читает', 'экономического'];
-  const russianCold = [];
-  for (const word of ruWords) {
-    const ru = new MultilingualDictionary({ loadJSON });
-    const start = performance.now();
-    const result = await ru.lookup(word);
-    if (!result.entries.length) throw Error('Missing Russian benchmark word: ' + word);
-    russianCold.push(performance.now() - start);
-    ru.dispose();
-  }
-  const ru = new MultilingualDictionary({ loadJSON });
-  const russian = { words: ruWords, emptyPluginCache: summarize(russianCold),
-    firstLookupWithSharedShardCache: await measure(ru, ruWords),
-    cached: await measure(ru, Array.from({ length: 1000 }, (_, i) => ruWords[i % ruWords.length])) };
-  ru.dispose();
-  engine.dispose();
   const report = {
     measuredAt: new Date().toISOString(), environment: { node: process.version, platform: os.platform(), cpu: os.cpus()[0].model },
-    entries: metadata.entries, preloadMs, emptyPluginCache: summarize(coldSamples), firstLookupAfterPreload: firstMixed, cached, russian, fileReads: reads,
+    entries: metadata.entries, preloadMs, emptyPluginCache: summarize(coldSamples), firstLookupAfterPreload: firstMixed, cached, fileReads: reads,
     limits: 'Node.js filesystem + JSON parsing only, OS disk cache may be warm; excludes XPI decompression, Zotero native popup delay, DOM rendering, and display. No comparison with the user’s existing plugin has been measured.',
   };
   await fs.mkdir(path.join(root, 'artifacts'), { recursive: true });

@@ -6,32 +6,22 @@ var QuickLexCore = (() => {
     if (typeof input !== "string" || input.length > 240) return null;
     const word = input.normalize("NFKC")
       .replace(/[\u00ad\u200b-\u200d\ufeff]/g, "")
-      .replace(/([a-zа-яё])-\s*\r?\n\s*([a-zа-яё])/gi, "$1$2")
-      .replace(/([а-яё])[\u0300\u0301]/gi, "$1")
+      .replace(/([a-z])-\s*\r?\n\s*([a-z])/gi, "$1$2")
       .replace(/[\u2018\u2019]/g, "'")
       .replace(/[\u2010\u2011]/g, "-")
       .trim()
-      .replace(/^[\s"'“”‘’«»([{<.,;:!?]+|[\s"'“”‘’«»)\]}>.,;:!?]+$/g, "")
+      .replace(/^[\s"'“”‘’([{<.,;:!?]+|[\s"'“”‘’)\]}>.,;:!?]+$/g, "")
       .toLowerCase();
-    return word.length <= 80 && (/^[a-z]+(?:['-][a-z]+)*$/.test(word)
-      || /^[а-яё]+(?:-[а-яё]+)*$/.test(word)) ? word : null;
+    return word.length <= 80 && /^[a-z]+(?:['-][a-z]+)*$/.test(word) ? word : null;
   }
 
-  function languageFor(word) { return /^[а-яё]/.test(word) ? "ru" : "en"; }
-
-  function onlineURL(word) {
-    return languageFor(word) === "ru"
-      ? "https://bkrs.info/slovo.php?ch=" + encodeURIComponent(word)
-      : "https://dict.youdao.com/result?word=" + encodeURIComponent(word) + "&lang=en";
-  }
-
-  // Identical FNV-1a hash in scripts/build_dictionary.py; supported letters are in the BMP.
-  function shardFor(word, count = 256) {
+  // Identical FNV-1a hash in scripts/build_dictionary.py (keys contain ASCII only).
+  function shardFor(word) {
     let hash = 0x811c9dc5;
     for (let i = 0; i < word.length; i++) {
       hash = Math.imul(hash ^ word.charCodeAt(i), 0x01000193) >>> 0;
     }
-    return (hash & (count - 1)).toString(16).padStart((count - 1).toString(16).length, "0");
+    return (hash & 255).toString(16).padStart(2, "0");
   }
 
   class LRU {
@@ -60,19 +50,17 @@ var QuickLexCore = (() => {
     return Object.prototype.hasOwnProperty.call(object, key);
   }
 
-  function unpack(record, query, sourceInfo) {
+  function unpack(record, query) {
     return Object.freeze({
       word: record[0], phonetic: record[1], translation: record[2], definition: record[3],
-      isBaseForm: normalizeSelection(record[0]) !== query,
-      sourceURL: record[4] && sourceInfo.urlPrefix ? sourceInfo.urlPrefix + encodeURIComponent(record[4]) : "",
+      isBaseForm: record[0].toLowerCase() !== query,
     });
   }
 
-  function resultFor(query, records, inferred, language, sourceInfo) {
+  function resultFor(query, records, inferred = false) {
     return Object.freeze({
-      query, source: sourceInfo.name, language, attribution: sourceInfo.attribution,
-      license: sourceInfo.license, inferred,
-      entries: Object.freeze(records.map(record => unpack(record, query, sourceInfo))),
+      query, source: "ECDICT", inferred,
+      entries: Object.freeze(records.map(record => unpack(record, query))),
     });
   }
 
@@ -94,13 +82,8 @@ var QuickLexCore = (() => {
   }
 
   class Dictionary {
-    constructor({ loadJSON, shardLimit = 24, resultLimit = 2048, language = "en", shardCount = language === "ru" ? 1024 : 256, sourceInfo }) {
+    constructor({ loadJSON, shardLimit = 24, resultLimit = 2048 }) {
       this.loadJSON = loadJSON;
-      this.language = language;
-      this.shardCount = shardCount;
-      this.sourceInfo = sourceInfo || (language === "ru"
-        ? { name: "БРуКС · 俄汉", attribution: "БРуКС / BKRS.info", license: "BKRS 自由使用声明", urlPrefix: "https://bkrs.info/slovo.php?ch=" }
-        : { name: "ECDICT", attribution: "ECDICT", license: "MIT", urlPrefix: "" });
       this.shards = new LRU(shardLimit);
       this.results = new LRU(resultLimit);
       this.pendingShards = new Map();
@@ -130,13 +113,9 @@ var QuickLexCore = (() => {
       }
     }
 
-    result(query, records, inferred = false) {
-      return resultFor(query, records, inferred, this.language, this.sourceInfo);
-    }
-
     peek(input) {
       const query = normalizeSelection(input);
-      if (!query || languageFor(query) !== this.language || this.disposed) return undefined;
+      if (!query || this.disposed) return undefined;
       const cached = this.results.get(query);
       if (cached) return cached;
       if (!this.hot) return undefined;
@@ -148,12 +127,12 @@ var QuickLexCore = (() => {
       for (const base of bases) {
         if (base !== query) records.push(this.hot.entries[base]);
       }
-      return this.results.set(query, this.result(query, records));
+      return this.results.set(query, resultFor(query, records));
     }
 
     async shard(word) {
       if (this.disposed) throw new Error("Dictionary is closed");
-      const key = shardFor(word, this.shardCount);
+      const key = shardFor(word);
       const cached = this.shards.get(key);
       if (cached) return cached;
       if (this.pendingShards.has(key)) return this.pendingShards.get(key);
@@ -177,7 +156,7 @@ var QuickLexCore = (() => {
     async lookup(input) {
       if (this.disposed) throw new Error("Dictionary is closed");
       const query = normalizeSelection(input);
-      if (!query || languageFor(query) !== this.language) return this.result("", []);
+      if (!query) return resultFor("", []);
       const immediate = this.peek(query);
       if (immediate) return immediate;
       if (this.pendingWords.has(query)) return this.pendingWords.get(query);
@@ -198,11 +177,9 @@ var QuickLexCore = (() => {
       const records = direct ? [direct] : [];
       const baseRecords = await Promise.all(bases.filter(base => base !== query).map(base => this.entry(base)));
       records.push(...baseRecords.filter(Boolean));
-      if (records.length) return this.result(query, records);
-      // Russian declensions/conjugations use only the source's explicit form index.
-      const guesses = this.language === "en"
-        ? await Promise.all(fallbackForms(query).map(base => this.entry(base))) : [];
-      return this.result(query, guesses.filter(Boolean), guesses.some(Boolean));
+      if (records.length) return resultFor(query, records);
+      const guesses = await Promise.all(fallbackForms(query).map(base => this.entry(base)));
+      return resultFor(query, guesses.filter(Boolean), guesses.some(Boolean));
     }
 
     dispose() {
@@ -215,36 +192,7 @@ var QuickLexCore = (() => {
     }
   }
 
-  class MultilingualDictionary {
-    constructor({ loadJSON, ...options }) {
-      this.disposed = false;
-      this.dictionaries = {
-        en: new Dictionary({ ...options, loadJSON }),
-        ru: new Dictionary({ ...options, language: "ru", loadJSON: file => loadJSON("ru/" + file) }),
-      };
-    }
-    warm() {
-      // Do not preload the second language until used; keep English startup costs unchanged.
-      if (this.disposed) return Promise.resolve();
-      return this.dictionaries.en.warm();
-    }
-    peek(input) {
-      const query = normalizeSelection(input);
-      return query ? this.dictionaries[languageFor(query)].peek(query) : undefined;
-    }
-    lookup(input) {
-      if (this.disposed) return Promise.reject(new Error("Dictionary is closed"));
-      const query = normalizeSelection(input);
-      const engine = this.dictionaries[query ? languageFor(query) : "en"];
-      return engine.lookup(input);
-    }
-    dispose() {
-      this.disposed = true;
-      for (const engine of Object.values(this.dictionaries)) engine.dispose();
-    }
-  }
-
-  return { normalizeSelection, languageFor, onlineURL, shardFor, LRU, Dictionary, MultilingualDictionary, fallbackForms };
+  return { normalizeSelection, shardFor, LRU, Dictionary, fallbackForms };
 })();
 
 if (typeof module !== "undefined" && module.exports) module.exports = QuickLexCore;

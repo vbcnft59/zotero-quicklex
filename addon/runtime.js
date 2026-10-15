@@ -1,21 +1,16 @@
 var QuickLexRuntime = (() => {
   "use strict";
-  function create({ Zotero, Services, rootURI, id, version, getStorage, pickDictionary }) {
+  function create({ Zotero, Services, rootURI, id, version }) {
     let active = false;
     const windows = new Map();
     const cards = new Set();
-    const engine = new QuickLexCore.MultilingualDictionary({
+    const engine = new QuickLexCore.Dictionary({
       // Zotero's resource reader handles jar: URLs containing '@' in installed plugin filenames.
       loadJSON: async path => JSON.parse(await Zotero.File.getResourceAsync(rootURI + "data/" + path)),
     });
     const enabled = () => Services.prefs.getBoolPref("extensions.quicklex.enabled", true);
-    const online = word => Zotero.launchURL(QuickLexCore.onlineURL(word));
-    const source = url => Zotero.launchURL(url);
+    const online = word => Zotero.launchURL("https://dict.youdao.com/result?word=" + encodeURIComponent(word) + "&lang=en");
     const logError = error => Zotero.logError(error);
-    const userDictionary = new QuickLexUserDictionary.Manager({ bundled: engine.dictionaries.ru,
-      prefs: Services.prefs, getStorage, yieldTask: () => Zotero.Promise.delay(0), onError: logError });
-    const lookupWord = query => QuickLexCore.languageFor(query) === "ru" ? userDictionary.lookup(query) : engine.lookup(query);
-    const peekWord = query => QuickLexCore.languageFor(query) === "ru" ? userDictionary.peek(query) : engine.peek(query);
     const now = () => Date.now();
 
     function removeCards() {
@@ -31,19 +26,19 @@ var QuickLexRuntime = (() => {
         const query = QuickLexCore.normalizeSelection(params?.annotation?.text);
         if (!query) return;
         let started = now();
-        const view = QuickLexCard.create(doc, query, { onOnline: online, onSource: source });
+        const view = QuickLexCard.create(doc, query, { onOnline: online });
         for (const ref of cards) {
           const card = ref.deref();
           if (!card || !card.isConnected) cards.delete(ref);
         }
         cards.add(new WeakRef(view.root));
-        const immediate = peekWord(query);
+        const immediate = engine.peek(query);
         if (immediate) view.render(immediate, now() - started);
         append(view.root);
         if (immediate) return;
         const lookup = async () => {
           try {
-            const result = await lookupWord(query);
+            const result = await engine.lookup(query);
             // Each popup owns its own node, so an older result cannot overwrite a new selection.
             if (active) view.render(result, now() - started);
           }
@@ -60,45 +55,23 @@ var QuickLexRuntime = (() => {
 
     async function manualLookup(win) {
       const input = { value: "" };
-      if (!Services.prompt.prompt(win, "QuickLex 英汉 / 俄汉速查", "输入一个英文或俄文单词：", input, null, {})) return;
+      if (!Services.prompt.prompt(win, "QuickLex 英汉速查", "输入一个英文单词：", input, null, {})) return;
       const query = QuickLexCore.normalizeSelection(input.value);
       if (!query) {
-        Services.prompt.alert(win, "QuickLex", "请输入一个英文或俄文单词；支持连字符和词库收录的词形变化。");
+        Services.prompt.alert(win, "QuickLex", "请输入一个英文单词；支持连字符和词形变化。");
         return;
       }
       try {
         const started = now();
-        const result = await lookupWord(query);
+        const result = await engine.lookup(query);
         if (!active || win.closed) return;
         const definitions = result.entries.map(entry => `${entry.word}${entry.phonetic ? " /" + entry.phonetic + "/" : ""}\n${entry.translation}`).join("\n\n");
         Services.prompt.alert(win, "QuickLex · " + query,
-          (definitions || "本地词典暂未收录这个词。") + `\n\n${result.source} · 本地查询 ${now() - started} ms`
-          + (result.language === "ru" ? "\n" + result.attribution + " · " + result.license
-            + (result.entries[0]?.sourceURL ? "\n来源：" + result.entries[0].sourceURL : "") : ""));
+          (definitions || "本地词典暂未收录这个词。") + `\n\n本地查询 ${now() - started} ms`);
       }
       catch (error) {
         logError(error);
         if (active && !win.closed) Services.prompt.alert(win, "QuickLex", "本地词典读取失败，请重新启用插件后重试。");
-      }
-    }
-
-    async function importDictionary(win) {
-      try {
-        if (userDictionary.busy) throw Error("词典正在导入，请稍候。");
-        const file = await pickDictionary(win);
-        if (!file || !active) return;
-        for (const state of windows.values()) state.importItem.setAttribute("label", "正在导入俄汉词典…");
-        const metadata = await userDictionary.importFile(file);
-        removeCards();
-        for (const state of windows.values()) state.resetItem.setAttribute("label", "恢复内置俄汉词典");
-        if (active && !win.closed) Services.prompt.alert(win, "QuickLex", `已导入“${metadata.name}”，共 ${metadata.entries.toLocaleString()} 个俄汉词条。\n\n即刻优先使用导入词典；未收录时使用内置 БРуКС。支持内置索引已收录的变形，新词以原形查询。`);
-      }
-      catch (error) {
-        logError(error);
-        if (active && !win.closed) Services.prompt.alert(win, "QuickLex 导入未完成", String(error.message || error));
-      }
-      finally {
-        for (const state of windows.values()) state.importItem.setAttribute("label", "导入俄汉词典（DSL）…");
       }
     }
 
@@ -124,29 +97,16 @@ var QuickLexRuntime = (() => {
       const lookup = doc.createXULElement("menuitem");
       lookup.setAttribute("label", "查一个单词…");
       lookup.addEventListener("command", () => { void manualLookup(win); });
-      const importItem = doc.createXULElement("menuitem");
-      importItem.setAttribute("label", "导入俄汉词典（DSL）…");
-      importItem.addEventListener("command", () => { void importDictionary(win); });
-      const reset = doc.createXULElement("menuitem");
-      reset.setAttribute("label", "恢复内置俄汉词典");
-      reset.addEventListener("command", () => {
-        void userDictionary.reset().then(() => {
-          removeCards();
-          for (const state of windows.values()) state.resetItem.setAttribute("label", "已恢复内置俄汉词典");
-        }).catch(error => {
-          if (active && !win.closed) Services.prompt.alert(win, "QuickLex", String(error.message || error));
-        });
-      });
       const about = doc.createXULElement("menuitem");
       about.setAttribute("label", "使用说明…");
       about.addEventListener("command", () => {
         Services.prompt.alert(win, `QuickLex ${version}`,
-          "在 Zotero 内置阅读器中双击英文或俄文单词，自动识别语言并显示中文释义。Windows 与 macOS 使用同一 XPI，无需 API Key，查词无需联网。\n\n英文来自 ECDICT；俄汉释义已更换为 БРуКС / BKRS.info，依据官网的自由使用与分发声明转换，保留中文义项、拼音、用法和例句。词形索引来自 OpenCorpora（原始许可 CC BY-SA 3.0，转换索引采用 4.0），支持变格、变位和省略 ё 的写法。俄汉词库不提供 IPA 音标。\n\n只有点击“在线补查”或词条来源才打开浏览器。英文补查打开有道，俄文打开 BKRS 俄汉词典。\n若旧翻译插件也自动弹窗，可关闭旧插件的自动查词。\n\n弹窗耗时仅统计本插件处理，不包含 Zotero 原生弹窗及屏幕绘制。\n当前版本面向 Zotero 10.0；专业术语和语境释义受词库覆盖限制。");
+          "在 Zotero 内置阅读器中双击英文单词，释义会显示在选词弹窗中。\n\n释义来自随插件安装的 ECDICT 本地词典，无需 API Key，查词无需联网。\n支持音标、多义项、词形还原及可展开的英文释义。\n\n点击“在线补查”才会在浏览器打开有道词典。\n若旧翻译插件也自动弹窗，可关闭旧插件的自动查词。\n\n弹窗耗时仅统计本插件处理，不包含 Zotero 原生弹窗及屏幕绘制。\n当前版本面向 Zotero 10.0；专业术语和语境释义受词库覆盖限制。");
       });
-      popup.append(toggle, lookup, importItem, reset, about);
+      popup.append(toggle, lookup, about);
       menu.append(popup);
       tools.append(menu);
-      windows.set(win, { menu, toggle, importItem, resetItem: reset });
+      windows.set(win, { menu, toggle });
     }
 
     function removeWindow(win) {
@@ -168,7 +128,6 @@ var QuickLexRuntime = (() => {
         removeCards();
         for (const win of [...windows.keys()]) removeWindow(win);
         engine.dispose();
-        userDictionary.dispose();
       },
       addWindow, removeWindow,
     };
